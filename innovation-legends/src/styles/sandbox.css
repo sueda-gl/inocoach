@@ -1,0 +1,282 @@
+/* Sandbox Page Styles */
+
+/* Message bubble styles */
+.message-bubble {
+  max-width: 80%;
+  padding: 12px 16px;
+  border-radius: 12px;
+  margin-bottom: 8px;
+  animation: fadeIn 0.3s ease-out;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.message-bubble-user {
+  background-color: rgba(108, 52, 131, 0.25); /* dark-purple with opacity - replaced electric-blue */
+  color: #f8f9fa; /* pure-white */
+  border-top-right-radius: 2px;
+  margin-left: auto;
+  border: 1px solid rgba(255, 255, 255, 0.1); /* Added white border */
+}
+
+.message-bubble-coach {
+  background-color: rgba(24, 28, 49, 0.8); /* cosmic-slate with opacity */
+  color: #f8f9fa; /* pure-white */
+  border-top-left-radius: 2px;
+  border: 1px solid rgba(255, 255, 255, 0.1); /* Added white border */
+}
+
+/* Card styling */
+.card {
+  background-color: rgba(18, 21, 40, 0.8); /* deep-space with opacity */
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  margin-bottom: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.05); /* Added subtle white border */
+}
+
+/* Button styles */
+.btn {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background-color: #6C3483; /* dark-purple - replaced electric-blue */
+  color: #f8f9fa; /* pure-white */
+  box-shadow: 0 2px 5px rgba(108, 52, 131, 0.3); /* Updated shadow color */
+  border: 1px solid rgba(255, 255, 255, 0.2); /* Added white border */
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: #8E44AD; /* lighter dark-purple */
+  box-shadow: 0 3px 8px rgba(108, 52, 131, 0.4); /* Updated shadow color */
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background-color: rgba(24, 28, 49, 0.7); /* cosmic-slate with opacity */
+  color: #f8f9fa; /* pure-white */
+  border: 1px solid rgba(255, 255, 255, 0.1); /* Added subtle white border */
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: rgba(37, 42, 64, 0.9); /* lighter cosmic-slate */
+}
+
+/* Input styles */
+.input {
+  background-color: rgba(24, 28, 49, 0.6); /* cosmic-slate with opacity */
+  border: 1px solid rgba(255, 255, 255, 0.15); /* Changed to white border for contrast */
+  color: #f8f9fa; /* pure-white */
+  padding: 10px 16px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #8E44AD; /* dark-purple - replaced electric-blue */
+  box-shadow: 0 0 0 2px rgba(108, 52, 131, 0.2); /* dark-purple with opacity */
+}
+
+/* Coach avatar */
+.coach-avatar {
+  border-radius: 50%;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.2); /* Added white border */
+}
+
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(24, 28, 49, 0.4);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(108, 52, 131, 0.5); /* dark-purple with opacity - replaced electric-blue */
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1); /* Added subtle white border */
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(108, 52, 131, 0.7); /* dark-purple with opacity - replaced electric-blue */
+}
+
+/* For Firefox */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(108, 52, 131, 0.5) rgba(24, 28, 49, 0.4); /* Updated colors for Firefox scrollbar */
+}
+
+/* Fixed panel styles for independent scrolling */
+.sandbox-fixed-container {
+  height: calc(100vh - 56px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding-top: 10px; /* Add padding to top of container */
+  border-left: 1px solid rgba(255, 255, 255, 0.05); /* Added subtle white border */
+  border-right: 1px solid rgba(255, 255, 255, 0.05); /* Added subtle white border */
+}
+
+.sandbox-scrollable-panel {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 20px; /* Add bottom padding to ensure content is fully visible */
+}
+
+.fixed-header {
+  flex-shrink: 0;
+  position: relative;
+  z-index: 10;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07); /* Added subtle white border */
+}
+
+.fixed-footer {
+  flex-shrink: 0;
+  padding-bottom: 10px; /* Add bottom padding to the footer */
+  margin-top: auto; /* Push the footer to the bottom */
+  border-top: 1px solid rgba(255, 255, 255, 0.07); /* Added subtle white border */
+}
+
+/* Add space for the navigation header */
+.coach-header-container {
+  margin-top: 56px; /* Height of the main navigation */
+  padding-top: 6px; /* Extra buffer space */
+}
+
+/* Aligned coach header with business simulation */
+.coach-header-aligned {
+  margin-top: 20px; /* Same as business-simulation-container */
+  padding-top: 0;
+}
+
+/* AI Coach badge styling */
+.ai-coach-badge {
+  border-radius: 9999px;
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  margin-left: auto;
+  font-weight: 500;
+  background-color: #6C3483; /* dark-purple - replaced electric-blue */
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2); /* Added white border */
+}
+
+/* Reduced top space specifically for the business simulation panel */
+.business-simulation-container {
+  margin-top: 20px; /* Reduced margin from the default 56px */
+  padding-top: 0; /* Remove extra padding */
+}
+
+/* Add space for fully visible business profile at bottom */
+.business-profile-container {
+  padding-bottom: 30px; /* Ensure the profile information is fully visible */
+  margin-bottom: 20px; /* Add additional margin at the bottom */
+}
+
+/* Ensure scrollable content has proper spacing */
+.sandbox-scrollable-panel > *:last-child {
+  margin-bottom: 50px; /* Add extra space after the last element */
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Dark space theme colors */
+.text-pure-white {
+  color: #f8f9fa;
+}
+
+.text-ghost-gray {
+  color: #767698;
+}
+
+.text-soft-silver {
+  color: #c0c0d0;
+}
+
+.text-electric-blue {
+  color: #6C3483; /* Changed to dark-purple */
+}
+
+.text-teal-pulse {
+  color: #05D8C6;
+}
+
+.text-coral-energy {
+  color: #FF6B6B;
+}
+
+.text-amethyst {
+  color: #9D5CFF;
+}
+
+.text-dark-purple {
+  color: #6C3483; /* Added new text color */
+}
+
+.bg-deep-space {
+  background-color: #0B0E1F;
+}
+
+.bg-midnight-navy {
+  background-color: #101323;
+}
+
+.bg-cosmic-slate {
+  background-color: #181C31;
+}
+
+.bg-electric-blue {
+  background-color: #6C3483; /* Changed to dark-purple */
+}
+
+.bg-dark-purple {
+  background-color: #6C3483; /* Added new background color */
+}
+
+.bg-teal-pulse {
+  background-color: #05D8C6;
+}
+
+.bg-amethyst {
+  background-color: #9D5CFF;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .message-bubble {
+    max-width: 90%;
+  }
+  
+  .card {
+    padding: 16px;
+  }
+} 

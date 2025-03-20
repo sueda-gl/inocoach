@@ -1,0 +1,96 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  body {
+    @apply bg-deep-space text-soft-silver;
+    margin: 0;
+    min-height: 100vh;
+  }
+  
+  /* Custom scrollbar */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: rgba(24, 28, 49, 0.4);
+    border-radius: 10px;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(108, 52, 131, 0.5); /* dark-purple with opacity */
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(108, 52, 131, 0.7);
+  }
+  
+  /* For Firefox */
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(108, 52, 131, 0.5) rgba(24, 28, 49, 0.4);
+  }
+  
+  /* Coach avatars container */
+  .coach-avatar-container {
+    padding: 10px 5px;
+    margin: 5px 0;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply px-4 py-2 rounded-md font-medium transition-all duration-200;
+  }
+  
+  .btn-primary {
+    @apply bg-electric-blue text-pure-white hover:bg-opacity-90;
+  }
+  
+  .btn-secondary {
+    @apply bg-cosmic-slate text-soft-silver hover:bg-opacity-90;
+  }
+  
+  .card {
+    @apply bg-midnight-navy rounded-xl p-6 shadow-lg;
+  }
+  
+  .input {
+    @apply bg-cosmic-slate bg-opacity-50 border border-midnight-navy rounded-md px-4 py-2 text-soft-silver focus:outline-none focus:ring-2 focus:ring-electric-blue;
+  }
+  
+  .orbital-container {
+    @apply relative w-full aspect-square flex items-center justify-center;
+  }
+  
+  .orbital-ring {
+    @apply absolute border border-cosmic-slate rounded-full animate-spin-slow;
+  }
+  
+  .coach-avatar {
+    @apply rounded-full border-2 shadow-lg;
+  }
+  
+  .message-bubble {
+    @apply rounded-2xl p-4 max-w-[80%];
+  }
+  
+  .message-bubble-user {
+    @apply bg-electric-blue bg-opacity-20 text-soft-silver self-end;
+  }
+  
+  .message-bubble-coach {
+    @apply bg-cosmic-slate text-soft-silver self-start;
+  }
+}

@@ -1,0 +1,627 @@
+import { useState, useRef, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useBusinessProfile } from '../hooks/useBusinessProfile';
+import { useCoach } from '../hooks/useCoach';
+import { useSimulation } from '../hooks/useSimulation';
+import { ImplementedIdea, IdeaSuggestion } from '../types';
+import { motion } from 'framer-motion';
+import '../styles/sandbox.css';
+
+// Placeholder components - these would be separated in a full implementation
+const SandboxLayout = ({ children }: { children: React.ReactNode }) => (
+  <div className="min-h-[calc(100vh-56px)] h-[calc(100vh-56px)] bg-deep-space overflow-hidden flex flex-col">
+    <div className="flex items-center justify-between bg-midnight-navy bg-opacity-90 px-4 py-3 border-b border-white border-opacity-10 shadow-lg z-10 fixed-header">
+      <div className="flex items-center">
+        <h1 className="text-xl font-bold text-pure-white">Innovation Sandbox</h1>
+        <div className="ml-4 px-3 py-1 bg-dark-purple bg-opacity-20 rounded-full text-sm text-pure-white border border-white border-opacity-30">
+          Interactive Mode
+        </div>
+      </div>
+      <div className="hidden md:block text-sm text-ghost-gray">
+        Experiment with innovation ideas and see their impact on your business
+      </div>
+    </div>
+    <div className="flex-grow mt-0">
+      {children}
+    </div>
+  </div>
+);
+
+// Coach conversation component (left side)
+const CoachConversation = ({ 
+  coachId, 
+  onImplementIdea 
+}: { 
+  coachId: string, 
+  onImplementIdea: (idea: Omit<ImplementedIdea, 'id' | 'implementationDate'>) => void 
+}) => {
+  const messageEndRef = useRef<HTMLDivElement>(null);
+  const { selectedCoach, currentSession, addMessage } = useCoach();
+  const [messageText, setMessageText] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+  
+  // Mock suggestions for demo purposes
+  const mockSuggestions: IdeaSuggestion[] = [
+    {
+      title: "Implement customer feedback loop",
+      description: "Set up a system to regularly collect and act on customer feedback.",
+      impact: {
+        revenue: 5,
+        profit: 2,
+        customerSatisfaction: 15,
+        marketShare: 3,
+        employeeEngagement: 5,
+        innovationIndex: 10
+      }
+    },
+    {
+      title: "Launch innovation workshop series",
+      description: "Regular internal workshops to generate and develop new ideas.",
+      impact: {
+        revenue: 2,
+        profit: 1,
+        customerSatisfaction: 0,
+        marketShare: 0,
+        employeeEngagement: 12,
+        innovationIndex: 15
+      }
+    },
+    {
+      title: "Develop digital transformation roadmap",
+      description: "Create a strategic plan for implementing digital technologies.",
+      impact: {
+        revenue: 10,
+        profit: 8,
+        customerSatisfaction: 5,
+        marketShare: 6,
+        employeeEngagement: 2,
+        innovationIndex: 20
+      }
+    }
+  ];
+  
+  // Scroll to bottom when messages change
+  useEffect(() => {
+    messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    
+    // Debug messages in chat - more detailed now
+    if (currentSession?.messages) {
+      console.log('---- MESSAGES UPDATED ----');
+      console.log(`Message count: ${currentSession.messages.length}`);
+      currentSession.messages.forEach((msg, idx) => {
+        console.log(`Message ${idx}: ${msg.sender} - ${msg.text.substring(0, 30)}...`);
+      });
+      console.log('------------------------');
+    }
+  }, [currentSession?.messages]);
+  
+  // Initial welcome message
+  useEffect(() => {
+    if (selectedCoach && (!currentSession || currentSession.messages.length === 0)) {
+      setTimeout(() => {
+        addMessage({
+          sender: 'coach',
+          text: `Hello! I'm ${selectedCoach.name}, your ${selectedCoach.title}. I'm here to help you innovate and grow your business. What specific challenges or opportunities would you like to discuss today?`,
+          suggestions: []
+        });
+      }, 1000);
+    }
+  }, [selectedCoach, currentSession, addMessage]);
+  
+  const handleSendMessage = () => {
+    if (messageText.trim() === '') return;
+    
+    // Store the user message text to reference later
+    const userMessageText = messageText.trim();
+    
+    // Clear input immediately 
+    setMessageText('');
+    
+    // Add user message immediately
+    addMessage({
+      sender: 'user',
+      text: userMessageText
+    });
+    
+    console.log('User message sent:', userMessageText);
+    
+    // Show typing indicator for coach response
+    setIsTyping(true);
+    
+    // Wait a realistic time before sending coach response
+    // Using a single setTimeout to ensure messages are processed in order
+    setTimeout(() => {
+      // Generate a random response with suggestions
+      const shouldSuggestIdeas = Math.random() > 0.5;
+      
+      // Turn off typing indicator
+      setIsTyping(false);
+      
+      // Add coach response
+      addMessage({
+        sender: 'coach',
+        text: shouldSuggestIdeas 
+          ? "Based on what you've shared, I have some innovation ideas that could help. Take a look at these suggestions:"
+          : "That's interesting! Let's explore that further. Can you tell me more about your specific goals in this area?",
+        suggestions: shouldSuggestIdeas ? mockSuggestions : []
+      });
+      
+      console.log('Coach response added with suggestions:', shouldSuggestIdeas);
+    }, 2000); // Fixed realistic delay
+  };
+  
+  const handleImplementIdea = (suggestion: IdeaSuggestion) => {
+    onImplementIdea({
+      title: suggestion.title,
+      description: suggestion.description,
+      impact: suggestion.impact,
+      coachId
+    });
+    
+    // Add confirmation message
+    addMessage({
+      sender: 'coach',
+      text: `Great choice! I've added "${suggestion.title}" to your implementation plan. Let's see how this affects your business projections.`,
+      suggestions: []
+    });
+  };
+  
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
+  
+  return (
+    <div className="sandbox-fixed-container bg-midnight-navy bg-opacity-70">
+      {/* Coach header */}
+      {selectedCoach && (
+        <div 
+          className="p-4 border-b border-white border-opacity-10 flex items-center gap-3 fixed-header coach-header-aligned"
+          style={{ 
+            background: `linear-gradient(to right, ${selectedCoach.accentColor}20, transparent)` 
+          }}
+        >
+          <div 
+            className="coach-avatar w-12 h-12 flex-shrink-0 flex items-center justify-center text-pure-white font-bold"
+            style={{ 
+              backgroundColor: '#6C3483',
+              boxShadow: `0 0 15px rgba(108, 52, 131, 0.6)`
+            }}
+          >
+            {selectedCoach.name.split(' ').map(part => part[0]).join('')}
+          </div>
+          <div>
+            <h2 className="font-semibold text-pure-white text-lg">{selectedCoach.name}</h2>
+            <p className="text-sm text-soft-silver">{selectedCoach.title}</p>
+          </div>
+          
+          <div className="ai-coach-badge" style={{ 
+            backgroundColor: `rgba(108, 52, 131, 0.2)`,
+            border: `1px solid rgba(255, 255, 255, 0.2)`,
+            color: '#fff'
+          }}>
+            AI Coach
+          </div>
+        </div>
+      )}
+      
+      {/* Message area */}
+      <div className="sandbox-scrollable-panel p-4 space-y-4 custom-scrollbar pt-6">
+        {/* Added a more robust check to make sure we have messages */}
+        {currentSession && Array.isArray(currentSession.messages) && currentSession.messages.length > 0 ? (
+          // Create a stable array before mapping to prevent issues
+          [...currentSession.messages].map((message, index) => (
+            <div 
+              key={message.id || `msg-${Date.now()}-${index}`}
+              className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+            >
+              {message.sender === 'coach' && selectedCoach && (
+                <div className="flex-shrink-0 w-8 h-8 rounded-full overflow-hidden mr-2 mt-1" style={{ 
+                  backgroundColor: selectedCoach.accentColor,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'white',
+                  fontSize: '0.75rem',
+                  fontWeight: 'bold'
+                }}>
+                  {selectedCoach.name.split(' ').map(part => part[0]).join('')}
+                </div>
+              )}
+              
+              <div 
+                className={`message-bubble ${
+                  message.sender === 'user' 
+                    ? 'message-bubble-user rounded-tr-sm' 
+                    : 'message-bubble-coach rounded-tl-sm'
+                }`}
+                style={{
+                  ...(message.sender === 'user' 
+                    ? { backgroundColor: 'rgba(45, 127, 249, 0.25)' } 
+                    : { backgroundColor: 'rgba(24, 28, 49, 0.8)' })
+                }}
+              >
+                <p className="text-pure-white">{message.text}</p>
+                
+                {/* Suggestions */}
+                {message.sender === 'coach' && message.suggestions && message.suggestions.length > 0 && (
+                  <div className="mt-4 space-y-3">
+                    {message.suggestions.map((suggestion, i) => (
+                      <motion.div 
+                        key={i} 
+                        className="bg-cosmic-slate bg-opacity-70 p-3 rounded-md border border-white border-opacity-10 hover:border-white hover:border-opacity-30 transition-colors"
+                        whileHover={{ scale: 1.02 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                      >
+                        <h4 className="font-medium text-dark-purple">{suggestion.title}</h4>
+                        <p className="text-soft-silver text-sm my-1">{suggestion.description}</p>
+                        
+                        <div className="flex flex-wrap gap-1 mt-2 mb-3">
+                          {Object.entries(suggestion.impact)
+                            .filter(([_, value]) => value !== 0)
+                            .map(([key, value]) => (
+                              <span 
+                                key={key}
+                                className="text-xs px-2 py-0.5 rounded-full"
+                                style={{
+                                  backgroundColor: value > 0 ? 'rgba(5, 216, 198, 0.2)' : 'rgba(255, 107, 107, 0.2)',
+                                  color: value > 0 ? '#05D8C6' : '#FF6B6B',
+                                  border: value > 0 ? '1px solid rgba(5, 216, 198, 0.3)' : '1px solid rgba(255, 107, 107, 0.3)'
+                                }}
+                              >
+                                {key.replace(/([A-Z])/g, ' $1').trim()}: {value > 0 ? `+${value}` : value}
+                              </span>
+                            ))
+                          }
+                        </div>
+                        
+                        <button 
+                          className="text-xs btn btn-primary mt-2 w-full"
+                          onClick={() => handleImplementIdea(suggestion)}
+                        >
+                          Implement This Idea
+                        </button>
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              
+              {message.sender === 'user' && (
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-dark-purple ml-2 mt-1 flex items-center justify-center text-white font-bold border border-white border-opacity-20">
+                  You
+                </div>
+              )}
+            </div>
+          ))
+        ) : (
+          <div className="text-center text-ghost-gray py-10">
+            No messages yet. Start the conversation by typing a message below.
+          </div>
+        )}
+        
+        {/* Typing indicator */}
+        {isTyping && (
+          <div className="flex justify-start">
+            <div className="message-bubble message-bubble-coach rounded-tl-sm flex space-x-2 items-center">
+              <span className="text-soft-silver text-sm">Typing</span>
+              <motion.div 
+                className="w-2 h-2 bg-ghost-gray rounded-full"
+                animate={{ y: [0, -5, 0] }}
+                transition={{ duration: 0.8, repeat: Infinity }}
+              />
+              <motion.div 
+                className="w-2 h-2 bg-ghost-gray rounded-full"
+                animate={{ y: [0, -5, 0] }}
+                transition={{ duration: 0.8, repeat: Infinity, delay: 0.2 }}
+              />
+              <motion.div 
+                className="w-2 h-2 bg-ghost-gray rounded-full"
+                animate={{ y: [0, -5, 0] }}
+                transition={{ duration: 0.8, repeat: Infinity, delay: 0.4 }}
+              />
+            </div>
+          </div>
+        )}
+        
+        <div ref={messageEndRef} />
+      </div>
+      
+      {/* Input area */}
+      <div className="p-4 border-t border-cosmic-slate bg-midnight-navy fixed-footer">
+        <div className="flex">
+          <textarea
+            className="input flex-grow min-h-[45px] max-h-[120px] resize-none pt-2 pl-4"
+            placeholder="Type your message..."
+            value={messageText}
+            onChange={(e) => setMessageText(e.target.value)}
+            onKeyDown={handleKeyPress}
+            rows={1}
+          />
+          <motion.button
+            className="btn btn-primary ml-2 flex-shrink-0 h-[45px] px-4 flex items-center justify-center"
+            onClick={handleSendMessage}
+            disabled={messageText.trim() === ''}
+            whileTap={{ scale: 0.95 }}
+            title="Send message"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 1.414L10.586 9H7a1 1 0 100 2h3.586l-1.293 1.293a1 1 0 101.414 1.414l3-3a1 1 0 000-1.414z" clipRule="evenodd" />
+            </svg>
+          </motion.button>
+        </div>
+        <p className="text-xs text-ghost-gray mt-3 ml-3">Press Enter to send. Shift+Enter for new line.</p>
+      </div>
+    </div>
+  );
+};
+
+// Business simulation component (right side)
+const BusinessSimulation = () => {
+  const { simulation } = useSimulation();
+  const { businessProfile } = useBusinessProfile();
+  
+  const formatMetricValue = (value: number, metric: string) => {
+    if (metric === 'revenue' || metric === 'profit') {
+      return `$${value}K`;
+    }
+    if (metric === 'marketShare' || metric === 'customerSatisfaction' || metric === 'employeeEngagement' || metric === 'innovationIndex') {
+      return `${value}%`;
+    }
+    return value;
+  };
+  
+  const getMetricTrend = (current: number, projected: number) => {
+    const difference = projected - current;
+    if (difference > 5) return "↑";
+    if (difference < -5) return "↓";
+    return "→";
+  };
+  
+  const getMetricTrendColor = (current: number, projected: number) => {
+    const difference = projected - current;
+    if (difference > 5) return "text-teal-pulse";
+    if (difference < -5) return "text-coral-energy";
+    return "text-ghost-gray";
+  };
+  
+  return (
+    <div className="sandbox-fixed-container bg-deep-space bg-opacity-80">
+      <div className="sandbox-scrollable-panel p-4 custom-scrollbar business-simulation-container">
+        <div className="card mb-6 border border-white border-opacity-10 bg-midnight-navy">
+          <h2 className="text-xl font-semibold text-pure-white mb-4 flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-dark-purple" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M5 3a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2H5zm9 4a1 1 0 10-2 0v6a1 1 0 102 0V7zm-3 2a1 1 0 10-2 0v4a1 1 0 102 0V9zm-3 3a1 1 0 10-2 0v1a1 1 0 102 0v-1z" clipRule="evenodd" />
+            </svg>
+            Business Simulation
+          </h2>
+          <p className="text-ghost-gray mb-4">
+            This simulation shows how your innovation decisions affect your business metrics over time.
+          </p>
+          
+          {/* Current metrics */}
+          <div className="mb-6">
+            <h3 className="text-lg font-medium text-pure-white mb-3 flex items-center">
+              <span className="w-2 h-2 bg-dark-purple rounded-full mr-2"></span>
+              Current Metrics
+            </h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {Object.entries(simulation.currentMetrics).map(([key, value]) => (
+                <div key={key} className="bg-cosmic-slate bg-opacity-60 p-3 rounded-lg border border-cosmic-slate hover:border-electric-blue transition-colors">
+                  <div className="text-ghost-gray text-sm">
+                    {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                  </div>
+                  <div className="flex items-end">
+                    <span className="text-xl font-medium text-pure-white">
+                      {formatMetricValue(value, key)}
+                    </span>
+                    <span className={`ml-2 ${getMetricTrendColor(value, simulation.oneYearProjection[key as keyof typeof simulation.oneYearProjection])}`}>
+                      {getMetricTrend(value, simulation.oneYearProjection[key as keyof typeof simulation.oneYearProjection])}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          {/* Timeline projection */}
+          <div className="mb-6">
+            <h3 className="text-lg font-medium text-pure-white mb-3 flex items-center">
+              <span className="w-2 h-2 bg-teal-pulse rounded-full mr-2"></span>
+              Projections
+            </h3>
+            <div className="bg-cosmic-slate bg-opacity-40 p-4 rounded-lg border border-cosmic-slate">
+              <div className="flex justify-between mb-6">
+                <div className="text-center">
+                  <div className="text-ghost-gray text-sm">Current</div>
+                  <div className="w-3 h-3 bg-dark-purple rounded-full mx-auto mt-1 border border-white border-opacity-20"></div>
+                </div>
+                <div className="text-center">
+                  <div className="text-ghost-gray text-sm">1 Year</div>
+                  <div className="w-3 h-3 bg-teal-pulse rounded-full mx-auto mt-1 border border-white border-opacity-20"></div>
+                </div>
+                <div className="text-center">
+                  <div className="text-ghost-gray text-sm">2 Years</div>
+                  <div className="w-3 h-3 bg-amethyst rounded-full mx-auto mt-1 border border-white border-opacity-20"></div>
+                </div>
+              </div>
+              
+              {/* Key metrics with projection lines */}
+              {Object.entries(simulation.currentMetrics).map(([key, currentValue]) => {
+                const oneYearValue = simulation.oneYearProjection[key as keyof typeof simulation.oneYearProjection];
+                const twoYearValue = simulation.twoYearProjection[key as keyof typeof simulation.twoYearProjection];
+                const max = Math.max(currentValue, oneYearValue, twoYearValue, 100); // Ensure scale is at least 0-100
+                
+                return (
+                  <div key={key} className="mb-4">
+                    <div className="flex justify-between mb-1">
+                      <span className="text-ghost-gray text-sm">
+                        {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                      </span>
+                      <div className="flex space-x-4">
+                        <span className="text-dark-purple">{formatMetricValue(currentValue, key)}</span>
+                        <span className="text-teal-pulse">{formatMetricValue(oneYearValue, key)}</span>
+                        <span className="text-amethyst">{formatMetricValue(twoYearValue, key)}</span>
+                      </div>
+                    </div>
+                    <div className="h-2 bg-cosmic-slate bg-opacity-60 rounded-full overflow-hidden relative">
+                      {/* Current value */}
+                      <div 
+                        className="absolute h-full bg-dark-purple" 
+                        style={{ width: `${(currentValue / max) * 100}%` }}
+                      ></div>
+                      {/* One year projection */}
+                      <div 
+                        className="absolute h-full bg-teal-pulse" 
+                        style={{ width: `${(oneYearValue / max) * 100}%`, opacity: 0.7 }}
+                      ></div>
+                      {/* Two year projection */}
+                      <div 
+                        className="absolute h-full bg-amethyst" 
+                        style={{ width: `${(twoYearValue / max) * 100}%`, opacity: 0.4 }}
+                      ></div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+          
+          {/* Implemented ideas */}
+          <div>
+            <h3 className="text-lg font-medium text-pure-white mb-3 flex items-center">
+              <span className="w-2 h-2 bg-amethyst rounded-full mr-2"></span>
+              Implemented Ideas ({simulation.implementedIdeas.length})
+            </h3>
+            
+            {simulation.implementedIdeas.length === 0 ? (
+              <div className="bg-cosmic-slate bg-opacity-40 p-4 rounded-lg text-center border border-white border-opacity-10 border-dashed">
+                <p className="text-ghost-gray">No ideas implemented yet. Discuss with your coach to get started.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {simulation.implementedIdeas.map((idea) => (
+                  <motion.div 
+                    key={idea.id} 
+                    className="bg-cosmic-slate bg-opacity-40 p-4 rounded-lg border border-white border-opacity-10 hover:border-white hover:border-opacity-30 transition-colors"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <h4 className="text-pure-white font-medium">{idea.title}</h4>
+                    <p className="text-soft-silver text-sm my-1">{idea.description}</p>
+                    <div className="mt-2 text-ghost-gray text-xs">
+                      Implemented on {idea.implementationDate.toLocaleDateString()}
+                    </div>
+                    
+                    <div className="mt-3 grid grid-cols-3 gap-2">
+                      {Object.entries(idea.impact).map(([key, value]) => {
+                        if (value === 0) return null;
+                        
+                        return (
+                          <div key={key} className="text-xs">
+                            <span className="text-ghost-gray">
+                              {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}:
+                            </span>
+                            <span className={value > 0 ? "text-teal-pulse ml-1" : "text-coral-energy ml-1"}>
+                              {value > 0 ? '+' : ''}{formatMetricValue(value, key)}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+        
+        {/* Business profile summary */}
+        {businessProfile && (
+          <div className="card border border-white border-opacity-10 bg-midnight-navy business-profile-container">
+            <h3 className="text-lg font-medium text-pure-white mb-3 flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-dark-purple" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+              </svg>
+              Business Profile
+            </h3>
+            <div className="space-y-2 divide-y divide-white divide-opacity-10">
+              <div className="pb-2">
+                <span className="text-ghost-gray">Name:</span>
+                <span className="text-pure-white ml-2">{businessProfile.name}</span>
+              </div>
+              <div className="py-2">
+                <span className="text-ghost-gray">Industry:</span>
+                <span className="text-pure-white ml-2">{businessProfile.industry}</span>
+              </div>
+              <div className="py-2">
+                <span className="text-ghost-gray">Size:</span>
+                <span className="text-pure-white ml-2">{businessProfile.size}</span>
+              </div>
+              <div className="pt-2">
+                <span className="text-ghost-gray">Innovation Readiness:</span>
+                <div className="flex items-center mt-1">
+                  <div className="w-full bg-cosmic-slate h-1.5 rounded-full border border-white border-opacity-5">
+                    <div 
+                      className="bg-dark-purple h-1.5 rounded-full"
+                      style={{ width: `${businessProfile.innovationReadiness}%` }}
+                    ></div>
+                  </div>
+                  <span className="text-pure-white ml-2 min-w-[40px] text-right">{businessProfile.innovationReadiness}/100</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const SandboxPage = () => {
+  const { coachId } = useParams<{ coachId: string }>();
+  const navigate = useNavigate();
+  const { selectCoach, selectedCoach } = useCoach();
+  const { implementIdea } = useSimulation();
+  
+  useEffect(() => {
+    if (coachId) {
+      selectCoach(coachId);
+    } else {
+      navigate('/dashboard');
+    }
+  }, [coachId, selectCoach, navigate]);
+  
+  if (!selectedCoach) {
+    return (
+      <div className="min-h-screen bg-deep-space flex flex-col items-center justify-center">
+        <motion.div 
+          className="w-16 h-16 border-4 border-t-transparent border-electric-blue rounded-full"
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+        />
+        <p className="text-ghost-gray mt-4">Loading coach data...</p>
+      </div>
+    );
+  }
+  
+  return (
+    <SandboxLayout>
+      <div className="w-full flex-grow overflow-hidden h-full px-6 md:px-10 pb-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 w-full h-full gap-6">
+          <div className="border-r border-white border-opacity-10 overflow-hidden h-full pr-4">
+            <CoachConversation coachId={coachId || ''} onImplementIdea={implementIdea} />
+          </div>
+          <div className="overflow-hidden h-full pl-4">
+            <BusinessSimulation />
+          </div>
+        </div>
+      </div>
+    </SandboxLayout>
+  );
+};
+
+export default SandboxPage; 
