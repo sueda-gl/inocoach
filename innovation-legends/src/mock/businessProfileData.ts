@@ -4,50 +4,74 @@ import { BusinessProfile, BusinessDNASegment } from '../types';
 export const mockDNASegments: BusinessDNASegment[] = [
   {
     id: "ops-efficiency",
-    name: "Operational Efficiency",
+    name: "Process Optimization",
     category: "operations",
-    strength: 65,
-    description: "How efficiently your business operates, including processes, systems, and resource utilization.",
+    strength: 72,
+    description: "Your ability to streamline workflows and optimize resource allocation across departments.",
     insights: [
-      "Your operational processes could benefit from additional automation.",
-      "Consider implementing lean management principles to reduce waste.",
-      "Your team structure shows good alignment with business goals."
+      "Your project management methodologies show strong implementation.",
+      "Consider adopting more agile approaches in non-technical departments.",
+      "Supply chain efficiency is in the top quartile for your industry."
     ]
   },
   {
     id: "financial-health",
-    name: "Financial Resources",
+    name: "Capital Structure",
     category: "finance",
-    strength: 78,
-    description: "Your business's financial health, including cash flow, investment capacity, and financial planning.",
+    strength: 63,
+    description: "Your organization's funding mix, investment strategy, and cash flow management.",
     insights: [
-      "Strong cash reserves provide stability for innovation initiatives.",
-      "Consider diversifying revenue streams to reduce market dependency.",
-      "Your investment in R&D is above industry average."
+      "Your debt-to-equity ratio is well-optimized for growth.",
+      "Consider allocating more resources to emerging technology investments.",
+      "Cash reserves are sufficient but could be more strategically deployed."
     ]
   },
   {
     id: "market-presence",
-    name: "Market Awareness",
+    name: "Brand Positioning",
     category: "marketing",
-    strength: 42,
-    description: "Your business's market knowledge, brand recognition, and customer insights.",
+    strength: 89,
+    description: "Your market differentiation, brand perception, and competitive positioning.",
     insights: [
-      "Your competitive analysis could be more comprehensive.",
-      "Customer feedback systems need strengthening.",
-      "Consider more targeted marketing campaigns based on demographic data."
+      "Your brand enjoys exceptional recognition within your target demographic.",
+      "Social media engagement metrics exceed industry benchmarks by 34%.",
+      "Consider expanding your thought leadership content strategy."
     ]
   },
   {
     id: "innovation-mindset",
-    name: "Innovation Culture",
+    name: "Creative Culture",
     category: "innovation",
-    strength: 55,
-    description: "Your organization's innovation mindset, risk tolerance, and creative problem-solving capabilities.",
+    strength: 47,
+    description: "Your organization's creativity, experimentation mindset, and innovation processes.",
     insights: [
-      "Employees report moderate comfort with taking calculated risks.",
-      "Brainstorming sessions produce good ideas but implementation is slow.",
-      "Consider creating dedicated innovation time for all employees."
+      "Employees report barriers to proposing unconventional solutions.",
+      "Innovation metrics are inconsistently applied across departments.",
+      "Consider implementing dedicated innovation sprints quarterly."
+    ]
+  },
+  {
+    id: "talent-development",
+    name: "Talent Ecosystem",
+    category: "operations",
+    strength: 81,
+    description: "Your ability to attract, develop, and retain high-performing talent.",
+    insights: [
+      "Your employee retention rate is 31% above industry average.",
+      "Training programs show excellent knowledge transfer effectiveness.",
+      "Consider expanding cross-functional development opportunities."
+    ]
+  },
+  {
+    id: "digital-transformation",
+    name: "Digital Maturity",
+    category: "innovation",
+    strength: 58,
+    description: "Your organization's adoption of digital technologies and data-driven decision making.",
+    insights: [
+      "Your data analytics capabilities are developing but underutilized.",
+      "Digital tool adoption varies significantly between departments.",
+      "Consider implementing a more cohesive digital transformation roadmap."
     ]
   }
 ];
@@ -77,21 +101,21 @@ const calculateProfileCompletion = () => {
 // Enhanced mock business profile with completion data
 export const mockBusinessProfile: BusinessProfile = {
   id: "bp-12345",
-  name: "TechNova Solutions",
-  industry: "Software & Technology",
-  size: "50-200 employees",
-  founded: 2015,
+  name: "NexGen Innovations",
+  industry: "Advanced Manufacturing & IoT",
+  size: "120-350 employees",
+  founded: 2011,
   challenges: [
-    "Scaling development team while maintaining quality",
-    "Entering new international markets",
-    "Balancing innovation with maintaining existing products"
+    "Integrating AI into manufacturing processes",
+    "Talent acquisition in a competitive market",
+    "Responding to rapid technological changes in the industry"
   ],
   goals: [
-    "Increase customer retention by 15% in the next year",
-    "Launch two new product features per quarter",
-    "Establish presence in Asian markets by Q4"
+    "Reduce production costs by 22% through automation",
+    "Launch 3 IoT-enabled product lines by next fiscal year",
+    "Achieve carbon-neutral operations by 2025"
   ],
-  innovationReadiness: 68,
+  innovationReadiness: 73,
   dnaSegments: mockDNASegments,
   profileCompletion: calculateProfileCompletion(),
   incompleteSections: profileSections.filter(section => !section.isComplete)

@@ -85,23 +85,28 @@ src/
 └── utils/             # Helper functions
 ```
 
+# Innovation Legends
+
 ## Development Notes
 
 ### Current Implementation (Demo Version)
 
 This version is a functional prototype that:
+
 - Uses local storage for persistence
 - Includes pre-defined mock coaches
 - Simulates coach conversations
 - Calculates simple business projections
+- **Integrates with external API directly from the frontend** (API key exposed for testing, will be secured later)
 
 ### Future Enhancements
 
-- **Backend Integration**: Connect to a real AI backend for coach conversations
-- **User Authentication**: Add user accounts and authentication
-- **Advanced Analytics**: More sophisticated business simulations
-- **Custom Coach Creation**: Allow businesses to create specialized coaches
-- **Collaboration Features**: Enable team collaboration on innovation projects
+- Backend Integration: Connect to a real AI backend for coach conversations
+- User Authentication: Add user accounts and authentication
+- Advanced Analytics: More sophisticated business simulations
+- Custom Coach Creation: Allow businesses to create specialized coaches
+- Collaboration Features: Enable team collaboration on innovation projects
+- **API Security: Move API calls to a backend service to secure API keys**
 
 ## License
 

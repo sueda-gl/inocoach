@@ -40,7 +40,7 @@ const initialBusinessDNASegments = [
     id: uuidv4(),
     name: 'Innovation Culture',
     category: 'innovation',
-    strength: 50,
+    strength: 18,
     description: 'How well your organization embraces and supports new ideas',
     insights: ['Initial assessment based on your responses']
   },
@@ -48,7 +48,7 @@ const initialBusinessDNASegments = [
     id: uuidv4(),
     name: 'Financial Resources',
     category: 'finance',
-    strength: 50,
+    strength: 70,
     description: 'Available capital and financial flexibility for innovation',
     insights: ['Initial assessment based on your responses']
   },
@@ -56,7 +56,7 @@ const initialBusinessDNASegments = [
     id: uuidv4(),
     name: 'Market Awareness',
     category: 'marketing',
-    strength: 50,
+    strength: 40,
     description: 'Understanding of customer needs and market trends',
     insights: ['Initial assessment based on your responses']
   },
@@ -64,7 +64,7 @@ const initialBusinessDNASegments = [
     id: uuidv4(),
     name: 'Operational Efficiency',
     category: 'operations',
-    strength: 50,
+    strength: 45,
     description: 'Ability to implement and scale new initiatives',
     insights: ['Initial assessment based on your responses']
   }

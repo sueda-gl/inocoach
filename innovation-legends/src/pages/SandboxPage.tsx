@@ -885,8 +885,14 @@ const BusinessSimulation = () => {
               Current Metrics
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              {Object.entries(simulation.currentMetrics).map(([key, value]) => (
-                <div key={key} className="bg-cosmic-slate bg-opacity-60 p-3 rounded-lg border border-cosmic-slate hover:border-projection-future transition-colors">
+              {Object.entries(simulation.currentMetrics).map(([key, value], index) => (
+                <motion.div 
+                  key={key} 
+                  className="bg-cosmic-slate bg-opacity-60 p-3 rounded-lg border border-cosmic-slate hover:border-projection-future transition-colors"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: 0.1 * index }}
+                >
                   <div className="text-ghost-gray text-sm">
                     {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
                   </div>
@@ -894,11 +900,18 @@ const BusinessSimulation = () => {
                     <span className="text-xl font-medium text-pure-white">
                       {formatMetricValue(value, key)}
                     </span>
-                    <span className={`ml-2 ${getMetricTrendColor(value, simulation.oneYearProjection[key as keyof typeof simulation.oneYearProjection])}`}>
-                      {getMetricTrend(value, simulation.oneYearProjection[key as keyof typeof simulation.oneYearProjection])}
-                    </span>
+                    {simulation.implementedIdeas.length > 0 && (
+                      <motion.span 
+                        className={`ml-2 ${getMetricTrendColor(value, simulation.oneYearProjection[key as keyof typeof simulation.oneYearProjection])}`}
+                        initial={{ opacity: 0, scale: 0.5 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.4, delay: 0.5 }}
+                      >
+                        {getMetricTrend(value, simulation.oneYearProjection[key as keyof typeof simulation.oneYearProjection])}
+                      </motion.span>
+                    )}
                   </div>
-                </div>
+                </motion.div>
               ))}
             </div>
           </div>
@@ -909,61 +922,107 @@ const BusinessSimulation = () => {
               <span className="w-2 h-2 bg-projection-future rounded-full mr-2"></span>
               Projections
             </h3>
-            <div className="bg-cosmic-slate bg-opacity-40 p-4 rounded-lg border border-cosmic-slate">
-              <div className="flex justify-between mb-6">
-                <div className="text-center">
-                  <div className="text-ghost-gray text-sm">Current</div>
-                  <div className="w-3 h-3 bg-projection-current rounded-full mx-auto mt-1 border border-white border-opacity-20"></div>
+            {simulation.implementedIdeas.length === 0 ? (
+              <motion.div 
+                className="bg-cosmic-slate bg-opacity-40 p-4 rounded-lg border border-cosmic-slate"
+                initial={{ opacity: 1 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <div className="text-center py-4">
+                  <p className="text-ghost-gray">Implement ideas to see business projections</p>
                 </div>
-                <div className="text-center">
-                  <div className="text-ghost-gray text-sm">1 Year</div>
-                  <div className="w-3 h-3 bg-projection-future rounded-full mx-auto mt-1 border border-white border-opacity-20"></div>
-                </div>
-                <div className="text-center">
-                  <div className="text-ghost-gray text-sm">2 Years</div>
-                  <div className="w-3 h-3 bg-amethyst rounded-full mx-auto mt-1 border border-white border-opacity-20"></div>
-                </div>
-              </div>
-              
-              {/* Key metrics with projection lines */}
-              {Object.entries(simulation.currentMetrics).map(([key, currentValue]) => {
-                const oneYearValue = simulation.oneYearProjection[key as keyof typeof simulation.oneYearProjection];
-                const twoYearValue = simulation.twoYearProjection[key as keyof typeof simulation.twoYearProjection];
-                const max = Math.max(currentValue, oneYearValue, twoYearValue, 100); // Ensure scale is at least 0-100
-                
-                return (
-                  <div key={key} className="mb-4">
-                    <div className="flex justify-between mb-1">
-                      <span className="text-ghost-gray text-sm">
-                        {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
-                      </span>
-                      <div className="flex space-x-4">
-                        <span className="text-projection-current">{formatMetricValue(currentValue, key)}</span>
-                        <span className="text-projection-future">{formatMetricValue(oneYearValue, key)}</span>
-                        <span className="text-amethyst">{formatMetricValue(twoYearValue, key)}</span>
-                      </div>
-                    </div>
-                    <div className="h-2 bg-cosmic-slate bg-opacity-60 rounded-full overflow-hidden relative">
-                      {/* Current value */}
-                      <div 
-                        className="absolute h-full bg-projection-current" 
-                        style={{ width: `${(currentValue / max) * 100}%` }}
-                      ></div>
-                      {/* One year projection */}
-                      <div 
-                        className="absolute h-full bg-projection-future" 
-                        style={{ width: `${(oneYearValue / max) * 100}%`, opacity: 0.7 }}
-                      ></div>
-                      {/* Two year projection */}
-                      <div 
-                        className="absolute h-full bg-amethyst" 
-                        style={{ width: `${(twoYearValue / max) * 100}%`, opacity: 0.4 }}
-                      ></div>
-                    </div>
+              </motion.div>
+            ) : (
+              <motion.div 
+                className="bg-cosmic-slate bg-opacity-40 p-4 rounded-lg border border-cosmic-slate"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ 
+                  duration: 0.5,
+                  staggerChildren: 0.1 
+                }}
+              >
+                <motion.div 
+                  className="flex justify-between mb-6"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.3, delay: 0.2 }}
+                >
+                  <div className="text-center">
+                    <div className="text-ghost-gray text-sm">Current</div>
+                    <div className="w-3 h-3 bg-projection-current rounded-full mx-auto mt-1 border border-white border-opacity-20"></div>
                   </div>
-                );
-              })}
-            </div>
+                  <div className="text-center">
+                    <div className="text-ghost-gray text-sm">1 Year</div>
+                    <div className="w-3 h-3 bg-projection-future rounded-full mx-auto mt-1 border border-white border-opacity-20"></div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-ghost-gray text-sm">2 Years</div>
+                    <div className="w-3 h-3 bg-amethyst rounded-full mx-auto mt-1 border border-white border-opacity-20"></div>
+                  </div>
+                </motion.div>
+                
+                {/* Key metrics with projection lines */}
+                {Object.entries(simulation.currentMetrics).map(([key, currentValue], index) => {
+                  const oneYearValue = simulation.oneYearProjection[key as keyof typeof simulation.oneYearProjection];
+                  const twoYearValue = simulation.twoYearProjection[key as keyof typeof simulation.twoYearProjection];
+                  const max = Math.max(currentValue, oneYearValue, twoYearValue, 100); // Ensure scale is at least 0-100
+                  
+                  return (
+                    <motion.div 
+                      key={key} 
+                      className="mb-4"
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.4, delay: 0.2 + (index * 0.1) }}
+                    >
+                      <div className="flex justify-between mb-1">
+                        <span className="text-ghost-gray text-sm">
+                          {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                        </span>
+                        <div className="flex space-x-4">
+                          <span className="text-projection-current">{formatMetricValue(currentValue, key)}</span>
+                          <span className="text-projection-future">{formatMetricValue(oneYearValue, key)}</span>
+                          <span className="text-amethyst">{formatMetricValue(twoYearValue, key)}</span>
+                        </div>
+                      </div>
+                      <motion.div 
+                        className="h-2 bg-cosmic-slate bg-opacity-60 rounded-full overflow-hidden relative"
+                        initial={{ width: 0 }}
+                        animate={{ width: "100%" }}
+                        transition={{ duration: 0.6, delay: 0.4 + (index * 0.1) }}
+                      >
+                        {/* Current value */}
+                        <motion.div 
+                          className="absolute h-full bg-projection-current" 
+                          style={{ width: `${(currentValue / max) * 100}%` }}
+                          initial={{ width: 0 }}
+                          animate={{ width: `${(currentValue / max) * 100}%` }}
+                          transition={{ duration: 0.8, delay: 0.6 + (index * 0.1) }}
+                        ></motion.div>
+                        {/* One year projection */}
+                        <motion.div 
+                          className="absolute h-full bg-projection-future" 
+                          style={{ width: `${(oneYearValue / max) * 100}%`, opacity: 0.7 }}
+                          initial={{ width: 0 }}
+                          animate={{ width: `${(oneYearValue / max) * 100}%` }}
+                          transition={{ duration: 0.8, delay: 0.7 + (index * 0.1) }}
+                        ></motion.div>
+                        {/* Two year projection */}
+                        <motion.div 
+                          className="absolute h-full bg-amethyst" 
+                          style={{ width: `${(twoYearValue / max) * 100}%`, opacity: 0.4 }}
+                          initial={{ width: 0 }}
+                          animate={{ width: `${(twoYearValue / max) * 100}%` }}
+                          transition={{ duration: 0.8, delay: 0.8 + (index * 0.1) }}
+                        ></motion.div>
+                      </motion.div>
+                    </motion.div>
+                  );
+                })}
+              </motion.div>
+            )}
           </div>
           
           {/* Implemented ideas */}
@@ -974,9 +1033,21 @@ const BusinessSimulation = () => {
             </h3>
             
             {simulation.implementedIdeas.length === 0 ? (
-              <div className="bg-cosmic-slate bg-opacity-40 p-4 rounded-lg text-center border border-white border-opacity-10 border-dashed">
-                <p className="text-ghost-gray">No ideas implemented yet. Discuss with your coach to get started.</p>
-              </div>
+              <motion.div 
+                className="bg-cosmic-slate bg-opacity-40 p-4 rounded-lg text-center border border-white border-opacity-10 border-dashed"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+              >
+                <motion.p 
+                  className="text-ghost-gray"
+                  initial={{ y: 10, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ duration: 0.4, delay: 0.5 }}
+                >
+                  No ideas implemented yet. Discuss with your coach to get started.
+                </motion.p>
+              </motion.div>
             ) : (
               <div className="space-y-3">
                 {simulation.implementedIdeas.map((idea) => (

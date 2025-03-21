@@ -6,6 +6,7 @@ import { useBusinessProfile } from './hooks/useBusinessProfile';
 import OnboardingPage from './pages/OnboardingPage';
 import DashboardPage from './pages/DashboardPage';
 import SandboxPage from './pages/SandboxPage';
+import AdminSettingsPage from './pages/AdminSettingsPage';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // Navigation bar shown after onboarding
@@ -62,6 +63,16 @@ const NavigationBar = () => {
                   : 'text-ghost-gray hover:text-soft-silver'}`}
               >
                 Sandbox
+              </Link>
+            </li>
+            <li>
+              <Link 
+                to="/admin/settings" 
+                className={`transition-colors ${location.pathname === '/admin/settings' 
+                  ? 'text-electric-blue font-medium' 
+                  : 'text-ghost-gray hover:text-soft-silver'}`}
+              >
+                Admin
               </Link>
             </li>
             <li>
@@ -149,6 +160,11 @@ function AppRoutes() {
           <Route path="/sandbox/:coachId" element={
             <ProtectedRoute>
               <PageTransition><SandboxPage /></PageTransition>
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/settings" element={
+            <ProtectedRoute>
+              <PageTransition><AdminSettingsPage /></PageTransition>
             </ProtectedRoute>
           } />
           <Route path="/" element={

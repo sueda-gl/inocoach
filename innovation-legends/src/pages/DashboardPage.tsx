@@ -4,6 +4,7 @@ import { useBusinessProfile } from '../hooks/useBusinessProfile';
 import { useCoach } from '../hooks/useCoach';
 import { BusinessDNASegment, Coach, ProfileSection } from '../types';
 import { motion } from 'framer-motion';
+import { getInstitutionImageSrc } from '../services/imageUpload';
 
 // Placeholder components - these would be separated into component files in a full implementation
 const DashboardLayout = ({ children }: { children: React.ReactNode }) => (
@@ -594,6 +595,31 @@ const RecommendedCoachesSection = ({ coaches }: { coaches: Coach[] }) => {
 
 // Matchmaking resources section
 const MatchmakingSection = () => {
+  // Resource data with image paths - these will be replaced with actual uploaded images
+  const resources = [
+    {
+      id: 1,
+      title: "Innovation Framework",
+      description: "A structured approach to generating and implementing new ideas.",
+      fallbackColor: "#2D7FF9", // electric-blue as fallback
+      buttonText: "Learn More"
+    },
+    {
+      id: 2,
+      title: "Market Analysis Tool",
+      description: "Identify opportunities and threats in your market landscape.",
+      fallbackColor: "#05D8C6", // teal-pulse as fallback
+      buttonText: "Learn More"
+    },
+    {
+      id: 3,
+      title: "Funding Resources",
+      description: "Options for financing your innovation initiatives.",
+      fallbackColor: "#9D5CFF", // amethyst as fallback
+      buttonText: "Learn More"
+    }
+  ];
+
   return (
     <section className="card">
       <h2 className="text-2xl font-semibold text-pure-white mb-4">Recommended Resources</h2>
@@ -602,29 +628,75 @@ const MatchmakingSection = () => {
       </p>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-cosmic-slate bg-opacity-30 p-4 rounded-lg">
-          <h3 className="text-lg font-medium text-pure-white mb-2">Innovation Framework</h3>
-          <p className="text-soft-silver mb-3">
-            A structured approach to generating and implementing new ideas.
-          </p>
-          <button className="btn btn-secondary text-sm">Learn More</button>
-        </div>
-        
-        <div className="bg-cosmic-slate bg-opacity-30 p-4 rounded-lg">
-          <h3 className="text-lg font-medium text-pure-white mb-2">Market Analysis Tool</h3>
-          <p className="text-soft-silver mb-3">
-            Identify opportunities and threats in your market landscape.
-          </p>
-          <button className="btn btn-secondary text-sm">Learn More</button>
-        </div>
-        
-        <div className="bg-cosmic-slate bg-opacity-30 p-4 rounded-lg">
-          <h3 className="text-lg font-medium text-pure-white mb-2">Funding Resources</h3>
-          <p className="text-soft-silver mb-3">
-            Options for financing your innovation initiatives.
-          </p>
-          <button className="btn btn-secondary text-sm">Learn More</button>
-        </div>
+        {resources.map((resource) => (
+          <motion.div
+            key={resource.id}
+            className="relative overflow-hidden rounded-lg group h-60 shadow-lg shadow-cosmic-slate/20 transition-all duration-500 hover:shadow-xl hover:shadow-cosmic-slate/30"
+            whileHover={{ 
+              scale: 1.03,
+              y: -5
+            }}
+            transition={{ 
+              type: "spring", 
+              stiffness: 300, 
+              damping: 20 
+            }}
+          >
+            {/* Background image or color */}
+            <div 
+              className="absolute inset-0 bg-cover bg-center transition-all duration-500 ease-in-out group-hover:scale-110"
+              style={{ 
+                backgroundImage: `url(${getInstitutionImageSrc(resource.id)})`,
+                backgroundColor: resource.fallbackColor // Fallback if image not loaded
+              }}
+            >
+              {/* Gradient overlay - always present but changes opacity */}
+              <div className="absolute inset-0 bg-gradient-to-t from-cosmic-slate to-transparent opacity-90 group-hover:opacity-70 transition-opacity duration-500"></div>
+            </div>
+            
+            {/* Content */}
+            <div className="relative z-10 flex flex-col justify-end h-full p-4 text-white transition-transform duration-500 ease-in-out">
+              <motion.h3 
+                className="text-lg font-medium text-pure-white mb-2"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 * resource.id, duration: 0.4 }}
+              >
+                {resource.title}
+              </motion.h3>
+              
+              <motion.p 
+                className="text-soft-silver mb-3 transition-all duration-300 group-hover:text-pure-white"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 * resource.id + 0.1, duration: 0.4 }}
+              >
+                {resource.description}
+              </motion.p>
+              
+              <motion.button 
+                className="btn btn-primary text-sm self-start mt-auto transition-transform duration-300 group-hover:scale-105 relative overflow-hidden"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 * resource.id + 0.2, duration: 0.4 }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <span className="relative z-10">{resource.buttonText}</span>
+                <motion.div 
+                  className="absolute inset-0 bg-white bg-opacity-10" 
+                  initial={{ x: "-100%" }}
+                  whileHover={{ x: 0 }}
+                  transition={{ duration: 0.3 }}
+                />
+              </motion.button>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+      
+      <div className="mt-6 text-ghost-gray text-sm">
+        <p>* Image placeholders shown. Upload your institutional images via the admin panel.</p>
       </div>
     </section>
   );
