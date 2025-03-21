@@ -3,6 +3,8 @@ import { motion } from 'framer-motion';
 import DocumentUpload from './DocumentUpload';
 import BusinessDNAAnimation from './BusinessDNAAnimation';
 import { BusinessProfile } from '../../types';
+import { extractMetricsFromDocument, extractBusinessProfileFromDocument } from '../../utils/documentProcessing';
+import { useSimulation } from '../../context/SimulationContext';
 
 interface DocumentUploadStepProps {
   businessProfile: Partial<BusinessProfile>;
@@ -24,6 +26,7 @@ const DocumentUploadStep = ({
     marketing: false,
     strategic: false
   });
+  const { simulation, setSimulation } = useSimulation();
   
   // Document type options for classification
   const documentOptions = [
@@ -53,8 +56,43 @@ const DocumentUploadStep = ({
   }, [files, documentTypes, onUpdate]);
   
   // Handle file uploads
-  const handleUpload = (uploadedFiles: File[]) => {
+  const handleUpload = async (uploadedFiles: File[]) => {
     setFiles(uploadedFiles);
+    
+    // Process the first file for metrics and business profile data
+    if (uploadedFiles.length > 0) {
+      try {
+        // Extract metrics from document
+        const metrics = await extractMetricsFromDocument(uploadedFiles[0]);
+        
+        // Extract business profile from document
+        const profileData = await extractBusinessProfileFromDocument(uploadedFiles[0]);
+        
+        // If we found metrics, update the simulation context
+        if (metrics) {
+          setSimulation(prev => ({
+            ...prev,
+            currentMetrics: metrics,
+          }));
+          
+          // Show success indicator
+          console.log('Business metrics successfully extracted from document!');
+        }
+        
+        // If we found profile data, update the business profile
+        if (profileData && Object.keys(profileData).length > 0) {
+          onUpdate(profileData);
+          console.log('Business profile data extracted from document!');
+        }
+        
+        // Show combined success message if either was successful
+        if (metrics || (profileData && Object.keys(profileData).length > 0)) {
+          alert('Business data successfully extracted from document!');
+        }
+      } catch (error) {
+        console.error('Error processing document:', error);
+      }
+    }
   };
   
   // Handle document type classification

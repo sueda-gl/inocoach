@@ -7,6 +7,9 @@ import { ImplementedIdea, IdeaSuggestion } from '../types';
 import { motion } from 'framer-motion';
 import '../styles/sandbox.css';
 import { getLLMResponse } from '../services/openai';
+import { v4 as uuidv4 } from 'uuid';
+import { evaluateInnovationImpact } from '../services/innovationProjectionService';
+import { extractMetricsFromDocument, extractBusinessProfileFromDocument } from '../utils/documentProcessing';
 
 // Placeholder components - these would be separated in a full implementation
 const SandboxLayout = ({ children }: { children: React.ReactNode }) => (
@@ -39,8 +42,10 @@ const CoachConversation = ({
   const messageEndRef = useRef<HTMLDivElement>(null);
   const { selectedCoach, currentSession, addMessage } = useCoach();
   const { businessProfile } = useBusinessProfile();
+  const { simulation, setSimulation } = useSimulation();
   const [messageText, setMessageText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [evaluatingInnovation, setEvaluatingInnovation] = useState(false);
   
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -343,6 +348,17 @@ ${challenges.map(c => `- ${c}`).join('\n')}`;
 ${goals.map(g => `- ${g}`).join('\n')}`;
       }
       
+      // Add real metrics data if available
+      if (simulation && simulation.currentMetrics) {
+        systemPrompt += `\n\nCURRENT BUSINESS METRICS:
+Revenue: $${simulation.currentMetrics.revenue}
+Profit: $${simulation.currentMetrics.profit}
+Customer Satisfaction: ${simulation.currentMetrics.customerSatisfaction}%
+Market Share: ${simulation.currentMetrics.marketShare}%
+Employee Engagement: ${simulation.currentMetrics.employeeEngagement}%
+Innovation Index: ${simulation.currentMetrics.innovationIndex}%`;
+      }
+      
       systemPrompt += `\n\nIMPORTANT INSTRUCTIONS:
 1. Give personalized advice based on the business context provided.
 2. Keep responses conversational, helpful, and concise (2-3 sentences).
@@ -350,6 +366,15 @@ ${goals.map(g => `- ${g}`).join('\n')}`;
 4. Reference specific aspects of their business when appropriate.
 5. Maintain continuity from previous messages in the conversation.
 6. If you don't have enough information, ask relevant follow-up questions.`;
+
+      // If this is an innovation request, ask the LLM to include specific innovation ideas
+      const isInnovationRequest = userMessageText.toLowerCase().includes('innovation') ||
+                                   userMessageText.toLowerCase().includes('idea') ||
+                                   userMessageText.toLowerCase().includes('strategy');
+                                   
+      if (isInnovationRequest) {
+        systemPrompt += `\n\nThe user is asking about innovation. Provide 1-2 specific, actionable innovation ideas tailored to their business context. Your ideas should be realistic and include enough detail that I can evaluate their potential business impact.`;
+      }
       
       // Debug the prompt
       console.log('System prompt:', systemPrompt);
@@ -385,6 +410,26 @@ ${goals.map(g => `- ${g}`).join('\n')}`;
       // Get response from the LLM with full conversation history
       const aiResponseText = await getLLMResponse(sessionMessages, systemPrompt);
       
+      // If this was an innovation suggestion, evaluate it immediately
+      if (isInnovationRequest && aiResponseText && businessProfile && simulation) {
+        // Don't await this so the user gets a response immediately
+        // We'll update projections in the background
+        evaluateInnovationImpact(
+          aiResponseText,
+          simulation.currentMetrics,
+          businessProfile
+        ).then(projections => {
+          setSimulation(prev => ({
+            ...prev,
+            oneYearProjection: projections.oneYear,
+            twoYearProjection: projections.twoYears
+          }));
+          console.log('Innovation impact evaluated:', projections);
+        }).catch(error => {
+          console.error('Error evaluating innovation impact:', error);
+        });
+      }
+      
       // Determine if we should include innovation suggestions based on response content
       const shouldSuggestIdeas = 
         aiResponseText && (
@@ -408,6 +453,14 @@ ${sessionMessages.map(msg => `${msg.sender.toUpperCase()}: ${msg.text}`).join('\
 
 Based on this conversation, and the following business context:
 ${businessContext}
+
+CURRENT BUSINESS METRICS:
+Revenue: $${simulation.currentMetrics.revenue}
+Profit: $${simulation.currentMetrics.profit}
+Customer Satisfaction: ${simulation.currentMetrics.customerSatisfaction}%
+Market Share: ${simulation.currentMetrics.marketShare}%
+Employee Engagement: ${simulation.currentMetrics.employeeEngagement}%
+Innovation Index: ${simulation.currentMetrics.innovationIndex}%
 
 The user specifically mentioned: "${userMessageText}"
 `;
@@ -574,6 +627,70 @@ Keep it concise (1-2 sentences), personalized, and encouraging.`;
     }
   };
   
+  // Add this function to implement an innovation and evaluate its impact
+  const implementInnovation = async (innovationText: string) => {
+    if (!businessProfile) return;
+    
+    setEvaluatingInnovation(true);
+    
+    try {
+      // Get the current metrics
+      const currentMetrics = simulation.currentMetrics;
+      
+      // Evaluate the innovation's impact
+      const projections = await evaluateInnovationImpact(
+        innovationText,
+        currentMetrics,
+        businessProfile
+      );
+      
+      // Update the simulation context with new projections
+      setSimulation(prev => ({
+        ...prev,
+        oneYearProjection: projections.oneYear,
+        twoYearProjection: projections.twoYears
+      }));
+      
+      // Calculate the impact relative to current metrics
+      const innovationImpact = {
+        revenue: projections.oneYear.revenue - currentMetrics.revenue,
+        profit: projections.oneYear.profit - currentMetrics.profit,
+        customerSatisfaction: projections.oneYear.customerSatisfaction - currentMetrics.customerSatisfaction,
+        marketShare: projections.oneYear.marketShare - currentMetrics.marketShare,
+        employeeEngagement: projections.oneYear.employeeEngagement - currentMetrics.employeeEngagement,
+        innovationIndex: projections.oneYear.innovationIndex - currentMetrics.innovationIndex
+      };
+      
+      // Create a title from the first 50 characters
+      const title = innovationText.substring(0, 50) + (innovationText.length > 50 ? '...' : '');
+      
+      // Implement the idea using the existing handler
+      onImplementIdea({
+        title: title,
+        description: innovationText,
+        impact: innovationImpact,
+        coachId
+      });
+      
+      // Show success message
+      addMessage({
+        sender: 'coach',
+        text: '✅ Innovation implemented! Business projections updated.',
+      });
+      
+    } catch (error) {
+      console.error('Error implementing innovation:', error);
+      
+      // Show error message
+      addMessage({
+        sender: 'coach',
+        text: '❌ There was an error evaluating this innovation.',
+      });
+    } finally {
+      setEvaluatingInnovation(false);
+    }
+  };
+  
   return (
     <div className="sandbox-fixed-container bg-midnight-navy bg-opacity-70">
       {/* Coach header */}
@@ -645,6 +762,20 @@ Keep it concise (1-2 sentences), personalized, and encouraging.`;
                 }}
               >
                 <p className="text-pure-white">{message.text}</p>
+                
+                {/* Add implement button for coach messages that contain innovation ideas */}
+                {message.sender === 'coach' && 
+                  (message.text.toLowerCase().includes('innovation') || 
+                   message.text.toLowerCase().includes('idea') ||
+                   message.text.toLowerCase().includes('strategy')) && (
+                  <button 
+                    onClick={() => implementInnovation(message.text)}
+                    className="mt-2 px-3 py-1 bg-teal-pulse text-midnight-navy rounded-md text-sm"
+                    disabled={evaluatingInnovation}
+                  >
+                    {evaluatingInnovation ? 'Evaluating...' : 'Implement This Idea'}
+                  </button>
+                )}
                 
                 {/* Suggestions */}
                 {message.sender === 'coach' && message.suggestions && message.suggestions.length > 0 && (
@@ -753,7 +884,68 @@ Keep it concise (1-2 sentences), personalized, and encouraging.`;
             </svg>
           </motion.button>
         </div>
-        <p className="text-xs text-ghost-gray mt-3 ml-3">Press Enter to send. Shift+Enter for new line.</p>
+        
+        <div className="flex justify-between items-center mt-3">
+          <p className="text-xs text-ghost-gray ml-3">Press Enter to send. Shift+Enter for new line.</p>
+          
+          {/* Document upload button */}
+          <div className="flex items-center">
+            <input
+              type="file"
+              accept=".docx,.doc,.pdf,.txt"
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                
+                try {
+                  // Extract business metrics
+                  const metrics = await extractMetricsFromDocument(file);
+                  
+                  // Extract business profile
+                  const profileData = await extractBusinessProfileFromDocument(file);
+                  
+                  // Update contexts
+                  if (metrics) {
+                    setSimulation(prev => ({
+                      ...prev,
+                      currentMetrics: metrics
+                    }));
+                  }
+                  
+                  // If we found profile data, add a message about it
+                  if (profileData && Object.keys(profileData).length > 0) {
+                    // Update business profile with extracted data
+                    // This assumes there's a method to update the business profile
+                    // You might need to adjust this based on your actual implementation
+                    if (typeof businessProfile === 'object' && businessProfile !== null) {
+                      // This is just a local update for the UI
+                      Object.assign(businessProfile, profileData);
+                    }
+                    
+                    addMessage({
+                      sender: 'coach',
+                      text: `I've loaded your business information from the document. I can see that you're from ${profileData.name || 'your company'} in the ${profileData.industry || 'industry'}. How can I help you with innovation today?`
+                    });
+                  }
+                  
+                  // Show success message
+                  alert('Business data loaded successfully!');
+                } catch (error) {
+                  console.error('Error processing document:', error);
+                  alert('Error loading business data. Please check the file format.');
+                }
+              }}
+              className="hidden"
+              id="business-document-upload"
+            />
+            <label
+              htmlFor="business-document-upload"
+              className="text-xs px-3 py-1 bg-cosmic-slate text-pure-white rounded-md cursor-pointer hover:bg-cosmic-slate/80 transition-colors"
+            >
+              Upload Business Document
+            </label>
+          </div>
+        </div>
       </div>
     </div>
   );
