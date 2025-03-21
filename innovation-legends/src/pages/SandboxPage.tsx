@@ -6,6 +6,7 @@ import { useSimulation } from '../hooks/useSimulation';
 import { ImplementedIdea, IdeaSuggestion } from '../types';
 import { motion } from 'framer-motion';
 import '../styles/sandbox.css';
+import { getLLMResponse } from '../services/openai';
 
 // Placeholder components - these would be separated in a full implementation
 const SandboxLayout = ({ children }: { children: React.ReactNode }) => (
@@ -37,6 +38,7 @@ const CoachConversation = ({
 }) => {
   const messageEndRef = useRef<HTMLDivElement>(null);
   const { selectedCoach, currentSession, addMessage } = useCoach();
+  const { businessProfile } = useBusinessProfile();
   const [messageText, setMessageText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   
@@ -98,17 +100,53 @@ const CoachConversation = ({
   // Initial welcome message
   useEffect(() => {
     if (selectedCoach && (!currentSession || currentSession.messages.length === 0)) {
-      setTimeout(() => {
-        addMessage({
-          sender: 'coach',
-          text: `Hello! I'm ${selectedCoach.name}, your ${selectedCoach.title}. I'm here to help you innovate and grow your business. What specific challenges or opportunities would you like to discuss today?`,
-          suggestions: []
+      // Show typing indicator immediately
+      setIsTyping(true);
+      
+      // Get business context for personalized first message
+      const businessName = businessProfile?.name || "";
+      const industry = businessProfile?.industry || "";
+      
+      // Create a system prompt for the initial greeting
+      const initialSystemPrompt = `You are an AI innovation coach named ${selectedCoach.name}.
+Your personality: ${selectedCoach.description || "helpful and insightful"}.
+Your specialty: ${selectedCoach.title || "business innovation"}.
+
+TASK: This is the very first message to the user. Introduce yourself briefly and ask for their name if they haven't shared it.
+If you already know their name or business details, use that information in your greeting.
+
+Business Context (if available):
+${businessName ? `Company: ${businessName}` : ""}
+${industry ? `Industry: ${industry}` : ""}
+
+Keep your response friendly, concise (1-2 sentences), and focused on starting the conversation.`;
+
+      console.log('Initial system prompt:', initialSystemPrompt);
+
+      // Make the initial LLM call
+      getLLMResponse([], initialSystemPrompt)
+        .then(aiResponseText => {
+          addMessage({
+            sender: 'coach',
+            text: aiResponseText || `Hello! I'm ${selectedCoach.name}. Could you please tell me your name so we can get started?`,
+            suggestions: []
+          });
+          setIsTyping(false);
+        })
+        .catch(error => {
+          console.error('Error getting initial AI response:', error);
+          // Fallback if the LLM call fails
+          addMessage({
+            sender: 'coach',
+            text: `Hello! I'm ${selectedCoach.name}. Could you please tell me your name so we can get started?`,
+            suggestions: []
+          });
+          setIsTyping(false);
         });
-      }, 1000);
     }
-  }, [selectedCoach, currentSession, addMessage]);
+  }, [selectedCoach, currentSession, addMessage, businessProfile]);
   
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (messageText.trim() === '') return;
     
     // Store the user message text to reference later
@@ -117,37 +155,95 @@ const CoachConversation = ({
     // Clear input immediately 
     setMessageText('');
     
-    // Add user message immediately
-    addMessage({
-      sender: 'user',
+    // Create a proper message object without id and timestamp (addMessage adds these)
+    const userMsg = {
+      sender: 'user' as const,
       text: userMessageText
-    });
+    };
+    
+    // Add user message immediately
+    addMessage(userMsg);
     
     console.log('User message sent:', userMessageText);
     
     // Show typing indicator for coach response
     setIsTyping(true);
     
-    // Wait a realistic time before sending coach response
-    // Using a single setTimeout to ensure messages are processed in order
-    setTimeout(() => {
-      // Generate a random response with suggestions
-      const shouldSuggestIdeas = Math.random() > 0.5;
+    try {
+      // Extract the business information
+      const businessName = businessProfile?.name || "your business";
+      const industry = businessProfile?.industry || "your industry";
+      const companySize = businessProfile?.size || "your company";
+      const challenges = businessProfile?.challenges || [];
+      const goals = businessProfile?.goals || [];
+      
+      // Create an enhanced system prompt with business context
+      let systemPrompt = `You are an AI innovation coach named ${selectedCoach?.name || "Coach"}.
+Your personality: ${selectedCoach?.description || "helpful and insightful"}.
+Your specialty: ${selectedCoach?.title || "business innovation"}.
+
+BUSINESS CONTEXT:
+Company: ${businessName}
+Industry: ${industry}
+Size: ${companySize}`;
+
+      // Add challenges if available
+      if (challenges.length > 0) {
+        systemPrompt += `\n\nBUSINESS CHALLENGES:
+${challenges.map(c => `- ${c}`).join('\n')}`;
+      }
+      
+      // Add goals if available
+      if (goals.length > 0) {
+        systemPrompt += `\n\nBUSINESS GOALS:
+${goals.map(g => `- ${g}`).join('\n')}`;
+      }
+      
+      systemPrompt += `\n\nGive personalized advice based on this business context.
+Keep responses conversational, helpful, and concise (2-3 sentences).
+Reference specific aspects of their business when appropriate.`;
+      
+      // Debug the prompt
+      console.log('System prompt:', systemPrompt);
+      
+      // Get messages from the current session to maintain context
+      // Make sure to NOT add any format conversion here, as the OpenAI service handles this
+      const sessionMessages = currentSession?.messages || [];
+      
+      console.log('Current session messages:', sessionMessages);
+      
+      // Get response from the LLM
+      const aiResponseText = await getLLMResponse(sessionMessages, systemPrompt);
+      
+      // Determine if we should include innovation suggestions
+      const shouldSuggestIdeas = Math.random() > 0.7 || 
+        (aiResponseText && (
+          aiResponseText.toLowerCase().includes("suggest") || 
+          aiResponseText.toLowerCase().includes("recommend")
+        ));
       
       // Turn off typing indicator
       setIsTyping(false);
       
-      // Add coach response
+      // Add coach response without id and timestamp (addMessage adds these)
       addMessage({
         sender: 'coach',
-        text: shouldSuggestIdeas 
-          ? "Based on what you've shared, I have some innovation ideas that could help. Take a look at these suggestions:"
-          : "That's interesting! Let's explore that further. Can you tell me more about your specific goals in this area?",
+        text: aiResponseText || "I'm thinking about how I can help your business innovate. Can you tell me more about your specific challenges?",
         suggestions: shouldSuggestIdeas ? mockSuggestions : []
       });
       
       console.log('Coach response added with suggestions:', shouldSuggestIdeas);
-    }, 2000); // Fixed realistic delay
+    } catch (error) {
+      console.error('Error getting AI response:', error);
+      setIsTyping(false);
+      
+      // Add fallback message without id and timestamp (addMessage adds these)
+      addMessage({
+        sender: 'coach',
+        text: "I'm having trouble connecting right now. Could you try again?",
+        suggestions: []
+      });
+    }
   };
   
   const handleImplementIdea = (suggestion: IdeaSuggestion) => {
@@ -158,7 +254,7 @@ const CoachConversation = ({
       coachId
     });
     
-    // Add confirmation message
+    // Add confirmation message without id and timestamp (addMessage adds these)
     addMessage({
       sender: 'coach',
       text: `Great choice! I've added "${suggestion.title}" to your implementation plan. Let's see how this affects your business projections.`,

@@ -26,6 +26,10 @@ export interface BusinessProfile {
   dnaSegments: BusinessDNASegment[];
   profileCompletion?: number; // Percentage of profile completed
   incompleteSections?: ProfileSection[]; // Sections that need to be completed
+  documentData?: {
+    count: number;
+    types: string[];
+  };
 }
 
 export interface Coach {

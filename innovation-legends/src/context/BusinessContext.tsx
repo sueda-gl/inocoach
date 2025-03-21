@@ -21,16 +21,33 @@ interface BusinessProviderProps {
 }
 
 export const BusinessProvider = ({ children }: BusinessProviderProps) => {
-  const [businessProfile, setBusinessProfile] = useState<BusinessProfile | null>(mockBusinessProfile);
-  const [isOnboardingComplete, setIsOnboardingComplete] = useState<boolean>(true);
+  const [businessProfile, setBusinessProfile] = useState<BusinessProfile | null>(null);
+  const [isOnboardingComplete, setIsOnboardingComplete] = useState<boolean>(false);
   
   // Load from localStorage on initial render
   useEffect(() => {
+    // For testing: Uncomment this line to clear localStorage and force onboarding
+    localStorage.removeItem('businessProfile');
+    
     const savedProfile = localStorage.getItem('businessProfile');
     if (savedProfile) {
-      const parsedProfile = JSON.parse(savedProfile);
-      setBusinessProfile(parsedProfile);
-      setIsOnboardingComplete(true);
+      try {
+        const parsedProfile = JSON.parse(savedProfile);
+        
+        // Only consider onboarding complete if we have all required fields
+        if (parsedProfile.name && parsedProfile.industry && parsedProfile.size) {
+          setBusinessProfile(parsedProfile);
+          setIsOnboardingComplete(true);
+        } else {
+          // If the profile is incomplete, clear it and start fresh
+          localStorage.removeItem('businessProfile');
+          setIsOnboardingComplete(false);
+        }
+      } catch (error) {
+        console.error('Error parsing saved profile:', error);
+        localStorage.removeItem('businessProfile');
+        setIsOnboardingComplete(false);
+      }
     }
   }, []);
   

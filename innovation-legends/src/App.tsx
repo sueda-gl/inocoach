@@ -11,10 +11,17 @@ import { motion, AnimatePresence } from 'framer-motion';
 // Navigation bar shown after onboarding
 const NavigationBar = () => {
   const location = useLocation();
-  const { businessProfile } = useBusinessProfile();
+  const { businessProfile, clearBusinessProfile } = useBusinessProfile();
   
   // Don't show on onboarding page
   if (location.pathname === '/onboarding') return null;
+  
+  const resetOnboarding = () => {
+    if (window.confirm('This will reset your onboarding process. Continue?')) {
+      clearBusinessProfile();
+      window.location.href = '/onboarding';
+    }
+  };
   
   return (
     <motion.header 
@@ -35,7 +42,7 @@ const NavigationBar = () => {
           )}
         </div>
         
-        <nav>
+        <nav className="flex items-center">
           <ul className="flex space-x-6">
             <li>
               <Link 
@@ -56,6 +63,14 @@ const NavigationBar = () => {
               >
                 Sandbox
               </Link>
+            </li>
+            <li>
+              <button
+                onClick={resetOnboarding}
+                className="text-ghost-gray hover:text-coral-energy text-sm ml-6"
+              >
+                Reset Onboarding
+              </button>
             </li>
           </ul>
         </nav>
@@ -87,8 +102,14 @@ const PageTransition = ({ children }: { children: React.ReactNode }) => {
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isOnboardingComplete, businessProfile } = useBusinessProfile();
   
-  // Check both the flag and the existence of a profile
-  if (!isOnboardingComplete || !businessProfile) {
+  // Use the same strict check as in AppRoutes
+  const isOnboardingDone = isOnboardingComplete && 
+                          businessProfile && 
+                          businessProfile.name && 
+                          businessProfile.industry && 
+                          businessProfile.size;
+  
+  if (!isOnboardingDone) {
     return <Navigate to="/onboarding" replace />;
   }
   
@@ -99,8 +120,17 @@ function AppRoutes() {
   const { isOnboardingComplete, businessProfile } = useBusinessProfile();
   const location = useLocation();
   
-  // If we're loading the profile, show a loading state
-  const isOnboardingDone = isOnboardingComplete && businessProfile;
+  // Only consider onboarding done if both flags are true AND business profile exists with essential data
+  const isOnboardingDone = isOnboardingComplete && 
+                          businessProfile && 
+                          businessProfile.name && 
+                          businessProfile.industry && 
+                          businessProfile.size;
+  
+  // For debugging
+  console.log('isOnboardingComplete:', isOnboardingComplete);
+  console.log('businessProfile exists:', !!businessProfile);
+  console.log('isOnboardingDone:', isOnboardingDone);
   
   return (
     <>
