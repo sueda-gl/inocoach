@@ -231,7 +231,16 @@ const ChatBasedProfileStep = ({
     // Prevent updating with empty object on initial render
     if (Object.keys(extractedProfile).length > 0) {
       console.log('Updating parent with profile:', extractedProfile);
-      onUpdate(extractedProfile);
+      
+      // Make sure we're not overwriting existing data with undefined values
+      const cleanedUpdates = Object.fromEntries(
+        Object.entries(extractedProfile).filter(([_, value]) => value !== undefined)
+      );
+      
+      // Only update if we have actual data to update
+      if (Object.keys(cleanedUpdates).length > 0) {
+        onUpdate(cleanedUpdates);
+      }
       
       // Check if we have all required fields
       const hasRequired = !!extractedProfile.name && 

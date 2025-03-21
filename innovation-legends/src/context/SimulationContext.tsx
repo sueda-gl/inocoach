@@ -15,20 +15,9 @@ interface SimulationContextType {
   simulation: BusinessSimulation;
   implementIdea: (idea: Omit<ImplementedIdea, 'id' | 'implementationDate'>) => void;
   resetSimulation: () => void;
-  setSimulation: (value: React.SetStateAction<BusinessSimulation>) => void;
 }
 
-export const SimulationContext = createContext<SimulationContextType>({
-  simulation: {
-    currentMetrics: initialMetrics,
-    oneYearProjection: initialMetrics,
-    twoYearProjection: initialMetrics,
-    implementedIdeas: []
-  },
-  implementIdea: () => {},
-  resetSimulation: () => {},
-  setSimulation: () => {}
-});
+export const SimulationContext = createContext<SimulationContextType | undefined>(undefined);
 
 interface SimulationProviderProps {
   children: ReactNode;
@@ -78,13 +67,13 @@ export const SimulationProvider = ({ children }: SimulationProviderProps) => {
     if (!businessContext?.businessProfile) return;
     
     // Get base metrics
-    const baseMetrics = { ...simulation.currentMetrics };
+    const baseMetrics = { ...initialMetrics };
     
     // Apply business profile factors to base metrics
     const profile = businessContext.businessProfile;
     const innovationReadiness = profile.innovationReadiness / 100; // Convert to 0-1 scale
     
-    baseMetrics.innovationIndex = Math.round(baseMetrics.innovationIndex * (1 + innovationReadiness * 0.3)); // Adjust innovation index
+    baseMetrics.innovationIndex = Math.round(40 + (innovationReadiness * 30)); // Adjust innovation index
     
     // Calculate impact of implemented ideas
     const implementedIdeas = simulation.implementedIdeas;
@@ -100,6 +89,7 @@ export const SimulationProvider = ({ children }: SimulationProviderProps) => {
     
     setSimulation(prev => ({
       ...prev,
+      currentMetrics: baseMetrics,
       oneYearProjection,
       twoYearProjection
     }));
@@ -167,18 +157,9 @@ export const SimulationProvider = ({ children }: SimulationProviderProps) => {
     <SimulationContext.Provider value={{
       simulation,
       implementIdea,
-      resetSimulation,
-      setSimulation
+      resetSimulation
     }}>
       {children}
     </SimulationContext.Provider>
   );
-};
-
-export const useSimulation = () => {
-  const context = useContext(SimulationContext);
-  if (context === undefined) {
-    throw new Error('useSimulation must be used within a SimulationProvider');
-  }
-  return context;
 }; 

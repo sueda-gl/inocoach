@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import BusinessDNAAnimation from './BusinessDNAAnimation';
 
@@ -9,108 +9,91 @@ interface InnovationReadinessStepProps {
   onBack: () => void;
 }
 
-const getReadinessDescription = (readiness: number): string => {
-  if (readiness < 25) {
-    return "You're at the early stages of your innovation journey. We'll help you build a strong foundation.";
-  } else if (readiness < 50) {
-    return "You have some innovation practices in place. Let's strengthen and expand them.";
-  } else if (readiness < 75) {
-    return "You have solid innovation capabilities. We'll help you take them to the next level.";
-  } else {
-    return "You're already an innovation leader! We'll focus on maintaining your edge and exploring new frontiers.";
-  }
-};
-
-const InnovationReadinessStep = ({ readiness, onUpdate, onNext, onBack }: InnovationReadinessStepProps) => {
-  const [animationProgress, setAnimationProgress] = useState(50);
-
-  // Update animation progress based on readiness
-  useEffect(() => {
-    setAnimationProgress(readiness);
-  }, [readiness]);
-
+const InnovationReadinessStep = ({ 
+  readiness, 
+  onUpdate, 
+  onNext, 
+  onBack 
+}: InnovationReadinessStepProps) => {
+  const [localReadiness, setLocalReadiness] = useState(readiness);
+  
+  const handleReadinessChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value);
+    setLocalReadiness(value);
+    onUpdate(value);
+  };
+  
+  // Get descriptive text based on readiness level
+  const getReadinessDescription = (value: number) => {
+    if (value < 25) {
+      return "Your organization is in the early stages of innovation capability. We'll help you build the foundation.";
+    } else if (value < 50) {
+      return "You have some innovation practices in place. We'll help strengthen and expand them.";
+    } else if (value < 75) {
+      return "You have solid innovation processes. We'll help refine and integrate them across your organization.";
+    } else {
+      return "Your organization has advanced innovation capabilities. We'll help you push boundaries and stay ahead.";
+    }
+  };
+  
   return (
     <div className="flex flex-col w-full">
-      <h2 className="text-2xl font-semibold text-pure-white mb-2">Rate Your Innovation Readiness</h2>
+      <h2 className="text-2xl font-semibold text-pure-white mb-2">Innovation Readiness</h2>
       <p className="text-soft-silver mb-6">
         How would you rate your organization's current innovation capabilities?
       </p>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Rating slider and description */}
-        <div className="md:col-span-2 bg-midnight-navy/50 rounded-lg border border-cosmic-slate/30 p-6 flex flex-col">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="mb-8"
-          >
-            <label className="block text-pure-white mb-2">Innovation Readiness ({readiness}%)</label>
+      
+      <div className="bg-midnight-navy/50 rounded-lg border border-cosmic-slate/30 p-6 mb-8">
+        <div className="flex flex-col items-center mb-6">
+          <div className="text-6xl font-bold text-electric-blue mb-2">
+            {localReadiness}%
+          </div>
+          <div className="w-full max-w-lg">
             <input
               type="range"
               min="0"
               max="100"
-              value={readiness}
-              onChange={(e) => onUpdate(parseInt(e.target.value))}
-              className="w-full h-2 bg-cosmic-slate rounded-lg appearance-none cursor-pointer"
+              step="1"
+              value={localReadiness}
+              onChange={handleReadinessChange}
+              className="w-full"
             />
             <div className="flex justify-between text-xs text-ghost-gray mt-1">
               <span>Beginner</span>
               <span>Developing</span>
               <span>Established</span>
-              <span>Leader</span>
+              <span>Advanced</span>
             </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3, duration: 0.5 }}
-            className="bg-midnight-navy/70 p-4 rounded-lg border border-cosmic-slate/20"
-          >
-            <h3 className="text-electric-blue font-medium mb-2">Assessment</h3>
-            <p className="text-soft-silver">{getReadinessDescription(readiness)}</p>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.6, duration: 0.5 }}
-            className="mt-auto"
-          >
-            <h3 className="text-electric-blue font-medium mt-6 mb-2">What this means</h3>
-            <p className="text-soft-silver">
-              Your self-assessment helps us tailor our recommendations and tools to your specific needs.
-              We'll focus on the areas where you need the most support while leveraging your existing strengths.
-            </p>
-          </motion.div>
+          </div>
         </div>
-
-        {/* Visual representation */}
-        <div className="bg-midnight-navy/50 rounded-lg border border-cosmic-slate/30 p-6 flex flex-col items-center">
-          <h3 className="text-pure-white font-medium text-center mb-4">Innovation Readiness</h3>
-          
-          <div className="flex-grow flex items-center justify-center">
-            <BusinessDNAAnimation progress={animationProgress} />
-          </div>
-          
-          <div className="w-full mt-4">
-            <div className="text-center">
-              <span className="text-3xl font-bold text-electric-blue">{readiness}%</span>
-            </div>
-            <div className="text-center mt-2">
-              <span className="text-ghost-gray text-sm">
-                {readiness < 25 ? 'Beginner' : 
-                 readiness < 50 ? 'Developing' : 
-                 readiness < 75 ? 'Established' : 'Leader'}
-              </span>
-            </div>
-          </div>
+        
+        <div className="bg-cosmic-slate/30 p-4 rounded-lg mt-4">
+          <p className="text-soft-silver">
+            {getReadinessDescription(localReadiness)}
+          </p>
+        </div>
+        
+        <div className="mt-6 space-y-4">
+          <h3 className="text-electric-blue font-medium">What this means:</h3>
+          <ul className="space-y-2 text-ghost-gray">
+            <li className="flex items-start">
+              <span className="mr-2 text-electric-blue">•</span>
+              <span>This helps us customize our innovation recommendations to your current capabilities</span>
+            </li>
+            <li className="flex items-start">
+              <span className="mr-2 text-electric-blue">•</span>
+              <span>We'll provide strategies that match your organization's readiness level</span>
+            </li>
+            <li className="flex items-start">
+              <span className="mr-2 text-electric-blue">•</span>
+              <span>You'll see this reflected in your Innovation DNA profile</span>
+            </li>
+          </ul>
         </div>
       </div>
       
       {/* Navigation */}
-      <div className="mt-8 flex justify-between">
+      <div className="flex justify-between">
         <motion.button
           onClick={onBack}
           className="btn btn-secondary"
@@ -126,7 +109,7 @@ const InnovationReadinessStep = ({ readiness, onUpdate, onNext, onBack }: Innova
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
         >
-          Next Step
+          Next
         </motion.button>
       </div>
     </div>

@@ -122,10 +122,15 @@ const OnboardingPage = () => {
     setIsSubmitting(true);
     
     try {
-      // Ensure the profile is complete
+      // Ensure the profile is complete with required fields
       const completeProfile = {
         ...profile,
-        // Add any missing default values if needed
+        // Make sure required fields have proper values, not empty strings
+        name: profile.name && profile.name.trim() !== '' ? profile.name : 'My Business',
+        industry: profile.industry && profile.industry.trim() !== '' ? profile.industry : 'Other',
+        size: profile.size && profile.size.trim() !== '' ? profile.size : '1-10',
+        founded: profile.founded || new Date().getFullYear(),
+        // Add any missing default values for optional fields
         challenges: profile.challenges || [],
         goals: profile.goals || [],
         innovationReadiness: profile.innovationReadiness || 50,
