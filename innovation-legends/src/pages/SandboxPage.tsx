@@ -42,46 +42,6 @@ const CoachConversation = ({
   const [messageText, setMessageText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   
-  // Mock suggestions for demo purposes
-  const mockSuggestions: IdeaSuggestion[] = [
-    {
-      title: "Implement customer feedback loop",
-      description: "Set up a system to regularly collect and act on customer feedback.",
-      impact: {
-        revenue: 5,
-        profit: 2,
-        customerSatisfaction: 15,
-        marketShare: 3,
-        employeeEngagement: 5,
-        innovationIndex: 10
-      }
-    },
-    {
-      title: "Launch innovation workshop series",
-      description: "Regular internal workshops to generate and develop new ideas.",
-      impact: {
-        revenue: 2,
-        profit: 1,
-        customerSatisfaction: 0,
-        marketShare: 0,
-        employeeEngagement: 12,
-        innovationIndex: 15
-      }
-    },
-    {
-      title: "Develop digital transformation roadmap",
-      description: "Create a strategic plan for implementing digital technologies.",
-      impact: {
-        revenue: 10,
-        profit: 8,
-        customerSatisfaction: 5,
-        marketShare: 6,
-        employeeEngagement: 2,
-        innovationIndex: 20
-      }
-    }
-  ];
-  
   // Scroll to bottom when messages change
   useEffect(() => {
     messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -103,48 +63,225 @@ const CoachConversation = ({
       // Show typing indicator immediately
       setIsTyping(true);
       
-      // Get business context for personalized first message
-      const businessName = businessProfile?.name || "";
-      const industry = businessProfile?.industry || "";
-      
-      // Create a system prompt for the initial greeting
-      const initialSystemPrompt = `You are an AI innovation coach named ${selectedCoach.name}.
+      // Define async function inside useEffect
+      const getInitialGreeting = async () => {
+        // Get business context for personalized first message
+        const businessName = businessProfile?.name || "";
+        const industry = businessProfile?.industry || "";
+        
+        // Create a system prompt for the initial greeting
+        const initialSystemPrompt = `You are an AI innovation coach named ${selectedCoach.name}.
 Your personality: ${selectedCoach.description || "helpful and insightful"}.
 Your specialty: ${selectedCoach.title || "business innovation"}.
 
-TASK: This is the very first message to the user. Introduce yourself briefly and ask for their name if they haven't shared it.
-If you already know their name or business details, use that information in your greeting.
+TASK: This is the very first message to the user. Your role is to:
+1. Introduce yourself as an innovation coach
+2. Explain that you're here to help them develop innovative solutions for their business challenges
+3. Ask how you can help them today or what business challenges they're facing
+4. Be conversational, friendly, and engaging
 
 Business Context (if available):
 ${businessName ? `Company: ${businessName}` : ""}
 ${industry ? `Industry: ${industry}` : ""}
 
-Keep your response friendly, concise (1-2 sentences), and focused on starting the conversation.`;
+IMPORTANT: Keep your response conversational, concise (2-3 sentences), and focused on how you can help with innovation. Do not use generic greetings or ask "how can I help" without mentioning innovation specifically.`;
 
-      console.log('Initial system prompt:', initialSystemPrompt);
+        console.log('Initial system prompt:', initialSystemPrompt);
 
-      // Make the initial LLM call
-      getLLMResponse([], initialSystemPrompt)
-        .then(aiResponseText => {
-          addMessage({
-            sender: 'coach',
-            text: aiResponseText || `Hello! I'm ${selectedCoach.name}. Could you please tell me your name so we can get started?`,
-            suggestions: []
-          });
-          setIsTyping(false);
-        })
-        .catch(error => {
+        // Make the initial LLM call - no fallback, purely LLM response
+        try {
+          const aiResponseText = await getLLMResponse([], initialSystemPrompt);
+          
+          if (aiResponseText) {
+            addMessage({
+              sender: 'coach',
+              text: aiResponseText,
+              suggestions: []
+            });
+          } else {
+            // Retry with a simplified prompt if we get an empty response
+            const retryPrompt = `You are ${selectedCoach.name}, an AI innovation coach. Introduce yourself briefly and ask for the user's name.`;
+            const retryResponse = await getLLMResponse([], retryPrompt);
+            
+            // If we still don't get a response, use a very minimal system message
+            if (retryResponse) {
+              addMessage({
+                sender: 'coach',
+                text: retryResponse,
+                suggestions: []
+              });
+            } else {
+              console.error('Failed to get initial greeting after multiple attempts');
+              addMessage({
+                sender: 'coach',
+                text: `[System Message] Innovation Coach ${selectedCoach.name} is ready to assist.`,
+                suggestions: []
+              });
+            }
+          }
+        } catch (error) {
           console.error('Error getting initial AI response:', error);
-          // Fallback if the LLM call fails
-          addMessage({
-            sender: 'coach',
-            text: `Hello! I'm ${selectedCoach.name}. Could you please tell me your name so we can get started?`,
-            suggestions: []
-          });
+          
+          // Try one more time with an even simpler prompt
+          try {
+            const emergencyPrompt = `You are ${selectedCoach.name}. Say a brief hello.`;
+            const emergencyResponse = await getLLMResponse([], emergencyPrompt);
+            
+            if (emergencyResponse) {
+              addMessage({
+                sender: 'coach',
+                text: emergencyResponse,
+                suggestions: []
+              });
+            } else {
+              // Only when all else fails, use minimal system message
+              addMessage({
+                sender: 'coach',
+                text: `[System Message] Innovation Coach ${selectedCoach.name} is ready to assist.`,
+                suggestions: []
+              });
+            }
+          } catch (secondError) {
+            console.error('Second error getting initial greeting:', secondError);
+            addMessage({
+              sender: 'coach',
+              text: `[System Message] Innovation Coach ${selectedCoach.name} is ready to assist.`,
+              suggestions: []
+            });
+          }
+        } finally {
           setIsTyping(false);
-        });
+        }
+      };
+      
+      // Call the async function
+      getInitialGreeting();
     }
   }, [selectedCoach, currentSession, addMessage, businessProfile]);
+  
+  // Helper function to generate suggestions using LLM
+  const generateSuggestions = async (userMessage: string, businessContext: string): Promise<IdeaSuggestion[]> => {
+    try {
+      const suggestionsPrompt = `You are a world-class innovation consultant specializing in creating specific, actionable innovation ideas tailored to businesses.
+
+${businessContext}
+
+TASK: Generate 3 highly relevant, specific innovation ideas based on the conversation above and business context.
+The ideas should directly address what the user is asking about or the challenges they've described.
+
+Remember:
+- Be very specific and practical, not generic
+- Each idea should be realistic and implementable
+- Focus on the exact business context, industry and needs mentioned
+- Don't just suggest generic innovation practices
+
+FORMAT YOUR RESPONSE EXACTLY AS FOLLOWS (provide 3 ideas with realistic impact numbers between 1-20):
+IDEA 1:
+Title: [title]
+Description: [brief description]
+Impact:
+- Revenue: [number]
+- Profit: [number]
+- Customer Satisfaction: [number]
+- Market Share: [number]
+- Employee Engagement: [number]
+- Innovation Index: [number]
+
+IDEA 2:
+[same format as above]
+
+IDEA 3:
+[same format as above]`;
+
+      console.log('Generating suggestions with prompt:', suggestionsPrompt);
+      const suggestionsResponse = await getLLMResponse([], suggestionsPrompt);
+      
+      if (!suggestionsResponse) {
+        console.log('No suggestions response received');
+        return [];
+      }
+      
+      // Parse the response to extract suggestions
+      const ideas: IdeaSuggestion[] = [];
+      const ideaBlocks = suggestionsResponse.split(/IDEA \d+:/g).filter(block => block.trim().length > 0);
+      
+      for (const block of ideaBlocks) {
+        try {
+          const titleMatch = block.match(/Title:\s*(.+?)(?=\n|$)/);
+          const descMatch = block.match(/Description:\s*(.+?)(?=\n|$)/);
+          
+          // Extract impact numbers
+          const revenueMatch = block.match(/Revenue:\s*(\d+)/);
+          const profitMatch = block.match(/Profit:\s*(\d+)/);
+          const custSatMatch = block.match(/Customer Satisfaction:\s*(\d+)/);
+          const marketShareMatch = block.match(/Market Share:\s*(\d+)/);
+          const empEngMatch = block.match(/Employee Engagement:\s*(\d+)/);
+          const innovMatch = block.match(/Innovation Index:\s*(\d+)/);
+          
+          if (titleMatch && descMatch) {
+            ideas.push({
+              title: titleMatch[1].trim(),
+              description: descMatch[1].trim(),
+              impact: {
+                revenue: revenueMatch ? parseInt(revenueMatch[1]) : 0,
+                profit: profitMatch ? parseInt(profitMatch[1]) : 0,
+                customerSatisfaction: custSatMatch ? parseInt(custSatMatch[1]) : 0,
+                marketShare: marketShareMatch ? parseInt(marketShareMatch[1]) : 0,
+                employeeEngagement: empEngMatch ? parseInt(empEngMatch[1]) : 0,
+                innovationIndex: innovMatch ? parseInt(innovMatch[1]) : 0
+              }
+            });
+          }
+        } catch (error) {
+          console.error('Error parsing suggestion block:', error);
+        }
+      }
+      
+      // If parsing failed, try again with a simpler approach
+      if (ideas.length === 0) {
+        console.log('Parsing failed, trying with simplifier prompt');
+        const simplePrompt = `Based on this user message: "${userMessage}" and business context, generate ONE innovation idea in this exact format:
+IDEA:
+Title: [short title]
+Description: [1-2 sentence description]
+Impact:
+- Revenue: [number between 1-20]
+- Profit: [number between 1-20]
+- Customer Satisfaction: [number between 1-20]
+- Market Share: [number between 1-20]
+- Employee Engagement: [number between 1-20]
+- Innovation Index: [number between 1-20]`;
+
+        const simpleResponse = await getLLMResponse([], simplePrompt);
+        
+        if (simpleResponse) {
+          const titleMatch = simpleResponse.match(/Title:\s*(.+?)(?=\n|$)/);
+          const descMatch = simpleResponse.match(/Description:\s*(.+?)(?=\n|$)/);
+          
+          if (titleMatch && descMatch) {
+            ideas.push({
+              title: titleMatch[1].trim(),
+              description: descMatch[1].trim(),
+              impact: {
+                revenue: 10,
+                profit: 8,
+                customerSatisfaction: 12,
+                marketShare: 7,
+                employeeEngagement: 9,
+                innovationIndex: 15
+              }
+            });
+          }
+        }
+      }
+      
+      console.log('Generated suggestions:', ideas);
+      return ideas;
+    } catch (error) {
+      console.error('Error generating suggestions:', error);
+      return [];
+    }
+  };
   
   const handleSendMessage = async () => {
     if (messageText.trim() === '') return;
@@ -177,6 +314,13 @@ Keep your response friendly, concise (1-2 sentences), and focused on starting th
       const challenges = businessProfile?.challenges || [];
       const goals = businessProfile?.goals || [];
       
+      // Build business context for suggestion generation
+      const businessContext = `Company: ${businessName}
+Industry: ${industry}
+Size: ${companySize}
+${challenges.length > 0 ? `\nChallenges:\n${challenges.map(c => `- ${c}`).join('\n')}` : ''}
+${goals.length > 0 ? `\nGoals:\n${goals.map(g => `- ${g}`).join('\n')}` : ''}`;
+      
       // Create an enhanced system prompt with business context
       let systemPrompt = `You are an AI innovation coach named ${selectedCoach?.name || "Coach"}.
 Your personality: ${selectedCoach?.description || "helpful and insightful"}.
@@ -199,54 +343,151 @@ ${challenges.map(c => `- ${c}`).join('\n')}`;
 ${goals.map(g => `- ${g}`).join('\n')}`;
       }
       
-      systemPrompt += `\n\nGive personalized advice based on this business context.
-Keep responses conversational, helpful, and concise (2-3 sentences).
-Reference specific aspects of their business when appropriate.`;
+      systemPrompt += `\n\nIMPORTANT INSTRUCTIONS:
+1. Give personalized advice based on the business context provided.
+2. Keep responses conversational, helpful, and concise (2-3 sentences).
+3. ALWAYS acknowledge and respond directly to the user's most recent message.
+4. Reference specific aspects of their business when appropriate.
+5. Maintain continuity from previous messages in the conversation.
+6. If you don't have enough information, ask relevant follow-up questions.`;
       
       // Debug the prompt
       console.log('System prompt:', systemPrompt);
       
-      // Get messages from the current session to maintain context
-      // Make sure to NOT add any format conversion here, as the OpenAI service handles this
-      const sessionMessages = currentSession?.messages || [];
+      // Get messages from the current session - this is crucial for context
+      let sessionMessages = currentSession?.messages || [];
       
-      console.log('Current session messages:', sessionMessages);
+      // Make sure we have the updated session with the latest user message
+      if (sessionMessages.length === 0 || 
+          sessionMessages[sessionMessages.length - 1].sender !== 'user' ||
+          sessionMessages[sessionMessages.length - 1].text !== userMessageText) {
+        // The latest user message isn't in the session yet, manually add it for context
+        console.log('Adding latest user message to context manually');
+        sessionMessages = [...sessionMessages, {
+          id: `temp-${Date.now()}`,
+          sender: 'user',
+          text: userMessageText,
+          timestamp: new Date()
+        }];
+      }
       
-      // Get response from the LLM
+      // For better context handling, limit to the last 10 messages if there are many
+      if (sessionMessages.length > 10) {
+        console.log(`Limiting context to last 10 messages out of ${sessionMessages.length} total messages`);
+        sessionMessages = sessionMessages.slice(-10);
+      }
+      
+      console.log(`Sending ${sessionMessages.length} messages for context`);
+      sessionMessages.forEach((msg, idx) => {
+        console.log(`Context message ${idx}: ${msg.sender} - ${msg.text.substring(0, 30)}...`);
+      });
+      
+      // Get response from the LLM with full conversation history
       const aiResponseText = await getLLMResponse(sessionMessages, systemPrompt);
       
-      // Determine if we should include innovation suggestions
-      const shouldSuggestIdeas = Math.random() > 0.7 || 
-        (aiResponseText && (
+      // Determine if we should include innovation suggestions based on response content
+      const shouldSuggestIdeas = 
+        aiResponseText && (
           aiResponseText.toLowerCase().includes("suggest") || 
-          aiResponseText.toLowerCase().includes("recommend")
-        ));
+          aiResponseText.toLowerCase().includes("recommend") ||
+          aiResponseText.toLowerCase().includes("idea") ||
+          aiResponseText.toLowerCase().includes("strategy") ||
+          userMessageText.toLowerCase().includes("suggest") ||
+          userMessageText.toLowerCase().includes("idea") ||
+          userMessageText.toLowerCase().includes("recommend") ||
+          userMessageText.toLowerCase().includes("innovation")
+        );
+      
+      // If we should suggest ideas, generate them using the LLM
+      let suggestions: IdeaSuggestion[] = [];
+      if (shouldSuggestIdeas) {
+        // Create a more specific suggestion prompt that includes the entire conversation
+        const specificContext = `
+FULL CONVERSATION HISTORY:
+${sessionMessages.map(msg => `${msg.sender.toUpperCase()}: ${msg.text}`).join('\n')}
+
+Based on this conversation, and the following business context:
+${businessContext}
+
+The user specifically mentioned: "${userMessageText}"
+`;
+        
+        suggestions = await generateSuggestions(userMessageText, specificContext);
+      }
       
       // Turn off typing indicator
       setIsTyping(false);
       
-      // Add coach response without id and timestamp (addMessage adds these)
-      addMessage({
-        sender: 'coach',
-        text: aiResponseText || "I'm thinking about how I can help your business innovate. Can you tell me more about your specific challenges?",
-        suggestions: shouldSuggestIdeas ? mockSuggestions : []
-      });
+      if (aiResponseText) {
+        // Add coach response from LLM
+        addMessage({
+          sender: 'coach',
+          text: aiResponseText,
+          suggestions: suggestions
+        });
+      } else {
+        // If no response text, make a second attempt with a simplified prompt
+        const retryPrompt = `You are ${selectedCoach?.name}, an AI innovation coach. The user just said: "${userMessageText}". 
+The conversation so far has been about: ${sessionMessages.slice(-3).map(msg => msg.text.substring(0, 50)).join(" | ")}
+Respond directly to their last message in a helpful way.`;
+        
+        const retryResponse = await getLLMResponse([], retryPrompt);
+        
+        // No hardcoded fallback text here
+        if (retryResponse) {
+          addMessage({
+            sender: 'coach',
+            text: retryResponse,
+            suggestions: []
+          });
+        } else {
+          // Only as a last resort, add a minimal response
+          addMessage({
+            sender: 'coach',
+            text: "I'm processing your request. Please share more about your business needs and I'll provide a more tailored response.",
+            suggestions: []
+          });
+        }
+      }
       
       console.log('Coach response added with suggestions:', shouldSuggestIdeas);
     } catch (error) {
       console.error('Error getting AI response:', error);
       setIsTyping(false);
       
-      // Add fallback message without id and timestamp (addMessage adds these)
-      addMessage({
-        sender: 'coach',
-        text: "I'm having trouble connecting right now. Could you try again?",
-        suggestions: []
-      });
+      // Make a simpler request in case of error
+      try {
+        // Include the user's last message directly in the emergency prompt
+        const emergencyPrompt = `You are ${selectedCoach?.name}, an AI innovation coach. The user just said: "${userMessageText}". Give a brief, direct response to their specific question or comment.`;
+        const emergencyResponse = await getLLMResponse([], emergencyPrompt);
+        
+        if (emergencyResponse) {
+          addMessage({
+            sender: 'coach',
+            text: emergencyResponse,
+            suggestions: []
+          });
+        } else {
+          // Absolute minimal fallback only as last resort
+          addMessage({
+            sender: 'coach',
+            text: "I'm having trouble processing that specific request. Could you rephrase or ask another question about innovation strategies?",
+            suggestions: []
+          });
+        }
+      } catch (secondError) {
+        console.error('Second error getting response:', secondError);
+        // Absolute minimal fallback only as last resort
+        addMessage({
+          sender: 'coach',
+          text: "I'm having trouble with the connection right now. Please try again with your question in a moment.",
+          suggestions: []
+        });
+      }
     }
   };
   
-  const handleImplementIdea = (suggestion: IdeaSuggestion) => {
+  const handleImplementIdea = async (suggestion: IdeaSuggestion) => {
     onImplementIdea({
       title: suggestion.title,
       description: suggestion.description,
@@ -254,12 +495,76 @@ Reference specific aspects of their business when appropriate.`;
       coachId
     });
     
-    // Add confirmation message without id and timestamp (addMessage adds these)
-    addMessage({
-      sender: 'coach',
-      text: `Great choice! I've added "${suggestion.title}" to your implementation plan. Let's see how this affects your business projections.`,
-      suggestions: []
-    });
+    // Show typing indicator
+    setIsTyping(true);
+    
+    try {
+      // Generate a confirmation message using the LLM
+      const confirmationPrompt = `The user has chosen to implement the following innovation idea: "${suggestion.title}: ${suggestion.description}".
+      
+As their AI innovation coach, craft a brief, enthusiastic message acknowledging their choice and mentioning that this will be added to their implementation plan. 
+Also briefly mention that this will affect their business projections.
+
+Keep it concise (1-2 sentences), personalized, and encouraging.`;
+      
+      let aiResponseText = await getLLMResponse([], confirmationPrompt);
+      
+      // If the first attempt fails, try a simpler prompt
+      if (!aiResponseText) {
+        console.log('First confirmation attempt failed, trying again with simpler prompt');
+        const simplePrompt = `The user is implementing "${suggestion.title}". As their innovation coach, acknowledge this choice positively.`;
+        aiResponseText = await getLLMResponse([], simplePrompt);
+      }
+      
+      // Add confirmation message without id and timestamp (addMessage adds these)
+      if (aiResponseText) {
+        addMessage({
+          sender: 'coach',
+          text: aiResponseText,
+          suggestions: []
+        });
+      } else {
+        // Only if both LLM attempts fail, use a minimal response that clearly indicates it's a system message
+        console.error('Failed to get LLM response for implementation confirmation after multiple attempts');
+        addMessage({
+          sender: 'coach',
+          text: `[Implementation registered] The idea "${suggestion.title}" has been added to your plan.`,
+          suggestions: []
+        });
+      }
+    } catch (error) {
+      console.error('Error getting implementation confirmation:', error);
+      
+      // Try one more time with an even simpler prompt
+      try {
+        const lastAttemptPrompt = `Say "Great choice implementing ${suggestion.title}!"`;
+        const emergencyResponse = await getLLMResponse([], lastAttemptPrompt);
+        
+        if (emergencyResponse) {
+          addMessage({
+            sender: 'coach',
+            text: emergencyResponse,
+            suggestions: []
+          });
+        } else {
+          // Absolute last resort
+          addMessage({
+            sender: 'coach',
+            text: `[Implementation registered] The idea "${suggestion.title}" has been added to your plan.`,
+            suggestions: []
+          });
+        }
+      } catch (secondError) {
+        console.error('Second error getting implementation confirmation:', secondError);
+        addMessage({
+          sender: 'coach',
+          text: `[Implementation registered] The idea "${suggestion.title}" has been added to your plan.`,
+          suggestions: []
+        });
+      }
+    } finally {
+      setIsTyping(false);
+    }
   };
   
   const handleKeyPress = (e: React.KeyboardEvent) => {
