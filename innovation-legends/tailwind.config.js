@@ -8,20 +8,24 @@ export default {
     extend: {
       colors: {
         // Primary backgrounds
-        'deep-space': '#0A0E17',
-        'midnight-navy': '#121A29',
-        'cosmic-slate': '#1E2A45',
+        'deep-space': '#121212', // Dark black
+        'midnight-navy': '#1E1E1E', // Slightly lighter black
+        'cosmic-slate': '#2A2A2A', // Dark gray
         
         // Accent colors
-        'electric-blue': '#2D7FF9',
-        'teal-pulse': '#05D8C6',
-        'amethyst': '#9D5CFF',
-        'coral-energy': '#FF5C87',
+        'electric-blue': '#4A4A4A', // Medium gray
+        'teal-pulse': '#757575', // Light gray
+        'amethyst': '#A0A0A0', // Silver gray
+        'coral-energy': '#C0C0C0', // Very light gray
         
         // Text colors
-        'pure-white': '#FFFFFF',
-        'soft-silver': '#D1D5DB',
-        'ghost-gray': '#8491A7',
+        'pure-white': '#FFFFFF', // White
+        'soft-silver': '#E0E0E0', // Light gray/almost white
+        'ghost-gray': '#9E9E9E', // Medium gray for less important text
+        
+        // New projection accent colors
+        'projection-current': '#71717A', // Dark slate gray
+        'projection-future': '#4F46E5', // Indigo shade (subtle)
       },
       // Animation definitions
       keyframes: {

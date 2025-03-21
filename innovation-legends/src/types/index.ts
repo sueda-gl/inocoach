@@ -30,6 +30,7 @@ export interface BusinessProfile {
     count: number;
     types: string[];
   };
+  innovationPersona?: InnovationPersona; // Added innovation persona classification
 }
 
 export interface Coach {
@@ -97,4 +98,13 @@ export interface Message {
   text: string;
   timestamp: Date;
   suggestions?: IdeaSuggestion[];
+}
+
+// Define innovation persona types
+export type InnovationPersonaType = 'clueless' | 'motivated' | 'hesitant';
+
+export interface InnovationPersona {
+  type: InnovationPersonaType;
+  confidence: 'high' | 'medium' | 'low';
+  explanation: string;
 } 

@@ -9,8 +9,9 @@ import { motion } from 'framer-motion';
 import ChatBasedProfileStep from '../components/business/ChatBasedProfileStep';
 import ChatBasedChallengesGoalsStep from '../components/business/ChatBasedChallengesGoalsStep';
 import DocumentUploadStep from '../components/business/DocumentUploadStep';
-import OnboardingCompletionStep from '../components/business/OnboardingCompletionStep';
 import InnovationReadinessStep from '../components/business/InnovationReadinessStep';
+import InnovationPersonaStep from '../components/business/InnovationPersonaStep';
+import OnboardingCompletionStep from '../components/business/OnboardingCompletionStep';
 
 // Reuse the OnboardingLayout component
 const OnboardingLayout = ({ children, currentStep, totalSteps }: { children: React.ReactNode, currentStep: number, totalSteps: number }) => (
@@ -86,7 +87,7 @@ const OnboardingPage = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const totalSteps = 5;
+  const totalSteps = 6;
   
   // For debugging - log profile changes
   useEffect(() => {
@@ -190,6 +191,15 @@ const OnboardingPage = () => {
           />
         );
       case 5:
+        return (
+          <InnovationPersonaStep
+            businessProfile={profile}
+            onUpdate={updateProfile}
+            onNext={handleNextStep}
+            onBack={handlePreviousStep}
+          />
+        );
+      case 6:
         return (
           <OnboardingCompletionStep
             profile={profile}

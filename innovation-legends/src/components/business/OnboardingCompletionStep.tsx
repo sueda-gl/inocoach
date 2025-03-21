@@ -37,6 +37,10 @@ const OnboardingCompletionStep = ({
       : 'None specified'
     },
     { label: 'Innovation Readiness', value: `${profile.innovationReadiness || 0}%` },
+    { label: 'Innovation Persona', value: profile.innovationPersona?.type 
+      ? profile.innovationPersona.type.charAt(0).toUpperCase() + profile.innovationPersona.type.slice(1)
+      : 'Not analyzed'
+    },
     { label: 'Documents Uploaded', value: profile.documentData?.count 
       ? `${profile.documentData.count} document(s)`
       : 'None'
@@ -80,7 +84,7 @@ const OnboardingCompletionStep = ({
             {summaryItems.map((item, index) => (
               <motion.div 
                 key={index}
-                variants={item}
+                variants={item as any}
                 className="grid grid-cols-2 gap-4 border-b border-cosmic-slate/20 pb-2"
               >
                 <span className="text-ghost-gray">{item.label}:</span>

@@ -11,7 +11,7 @@
 }
 
 .message-bubble-user {
-  background-color: rgba(108, 52, 131, 0.25); /* dark-purple with opacity - replaced electric-blue */
+  background-color: rgba(74, 74, 74, 0.25); /* Medium gray with opacity - using electric-blue value */
   color: #f8f9fa; /* pure-white */
   border-top-right-radius: 2px;
   margin-left: auto;
@@ -19,7 +19,7 @@
 }
 
 .message-bubble-coach {
-  background-color: rgba(24, 28, 49, 0.8); /* cosmic-slate with opacity */
+  background-color: rgba(42, 42, 42, 0.8); /* cosmic-slate with opacity */
   color: #f8f9fa; /* pure-white */
   border-top-left-radius: 2px;
   border: 1px solid rgba(255, 255, 255, 0.1); /* Added white border */
@@ -27,7 +27,7 @@
 
 /* Card styling */
 .card {
-  background-color: rgba(18, 21, 40, 0.8); /* deep-space with opacity */
+  background-color: rgba(30, 30, 30, 0.8); /* midnight-navy with opacity */
   border-radius: 12px;
   padding: 20px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
@@ -35,13 +35,15 @@
   border: 1px solid rgba(255, 255, 255, 0.05); /* Added subtle white border */
 }
 
-/* Button styles */
+/* Button styling */
 .btn {
-  padding: 8px 16px;
-  border-radius: 6px;
+  padding: 10px 16px;
+  border-radius: 8px;
   font-weight: 500;
   transition: all 0.2s ease;
-  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .btn:disabled {
@@ -50,42 +52,40 @@
 }
 
 .btn-primary {
-  background-color: #6C3483; /* dark-purple - replaced electric-blue */
-  color: #f8f9fa; /* pure-white */
-  box-shadow: 0 2px 5px rgba(108, 52, 131, 0.3); /* Updated shadow color */
-  border: 1px solid rgba(255, 255, 255, 0.2); /* Added white border */
+  background-color: #333333; /* Dark gray */
+  color: #FFFFFF;
+  border: 1px solid #4A4A4A;
 }
 
 .btn-primary:hover:not(:disabled) {
-  background-color: #8E44AD; /* lighter dark-purple */
-  box-shadow: 0 3px 8px rgba(108, 52, 131, 0.4); /* Updated shadow color */
+  background-color: #4A4A4A; /* Medium gray */
   transform: translateY(-1px);
 }
 
 .btn-secondary {
-  background-color: rgba(24, 28, 49, 0.7); /* cosmic-slate with opacity */
-  color: #f8f9fa; /* pure-white */
-  border: 1px solid rgba(255, 255, 255, 0.1); /* Added subtle white border */
+  background-color: transparent;
+  color: #E0E0E0;
+  border: 1px solid #4A4A4A;
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background-color: rgba(37, 42, 64, 0.9); /* lighter cosmic-slate */
+  background-color: rgba(74, 74, 74, 0.1);
 }
 
-/* Input styles */
+/* Input styling */
 .input {
-  background-color: rgba(24, 28, 49, 0.6); /* cosmic-slate with opacity */
-  border: 1px solid rgba(255, 255, 255, 0.15); /* Changed to white border for contrast */
-  color: #f8f9fa; /* pure-white */
+  background-color: rgba(42, 42, 42, 0.5);
+  border: 1px solid #333333;
+  border-radius: 8px;
   padding: 10px 16px;
-  border-radius: 6px;
+  color: #E0E0E0;
   transition: all 0.2s ease;
 }
 
 .input:focus {
   outline: none;
-  border-color: #8E44AD; /* dark-purple - replaced electric-blue */
-  box-shadow: 0 0 0 2px rgba(108, 52, 131, 0.2); /* dark-purple with opacity */
+  border-color: #4A4A4A;
+  box-shadow: 0 0 0 2px rgba(74, 74, 74, 0.2);
 }
 
 /* Coach avatar */
@@ -95,31 +95,30 @@
   border: 2px solid rgba(255, 255, 255, 0.2); /* Added white border */
 }
 
-/* Custom Scrollbar */
+/* Custom scrollbar styles */
 .custom-scrollbar::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
-  background: rgba(24, 28, 49, 0.4);
+  background: rgba(26, 26, 26, 0.4);
   border-radius: 10px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(108, 52, 131, 0.5); /* dark-purple with opacity - replaced electric-blue */
+  background: rgba(100, 100, 100, 0.5); /* Medium gray with opacity */
   border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.1); /* Added subtle white border */
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(108, 52, 131, 0.7); /* dark-purple with opacity - replaced electric-blue */
+  background: rgba(130, 130, 130, 0.7); /* Lighter gray on hover */
 }
 
-/* For Firefox */
 .custom-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: rgba(108, 52, 131, 0.5) rgba(24, 28, 49, 0.4); /* Updated colors for Firefox scrollbar */
+  scrollbar-color: rgba(100, 100, 100, 0.5) rgba(26, 26, 26, 0.4);
 }
 
 /* Fixed panel styles for independent scrolling */
@@ -209,65 +208,83 @@
   }
 }
 
-/* Dark space theme colors */
+/* Minimalist black and white theme colors */
 .text-pure-white {
-  color: #f8f9fa;
+  color: #FFFFFF;
 }
 
 .text-ghost-gray {
-  color: #767698;
+  color: #9E9E9E;
 }
 
 .text-soft-silver {
-  color: #c0c0d0;
+  color: #E0E0E0;
 }
 
 .text-electric-blue {
-  color: #6C3483; /* Changed to dark-purple */
+  color: #4A4A4A; /* Changed to medium gray */
 }
 
 .text-teal-pulse {
-  color: #05D8C6;
+  color: #757575; /* Changed to light gray */
 }
 
 .text-coral-energy {
-  color: #FF6B6B;
+  color: #C0C0C0; /* Changed to very light gray */
 }
 
 .text-amethyst {
-  color: #9D5CFF;
+  color: #A0A0A0; /* Changed to silver gray */
 }
 
 .text-dark-purple {
-  color: #6C3483; /* Added new text color */
+  color: #333333; /* Changed to dark gray */
+}
+
+/* New projection colors */
+.text-projection-current {
+  color: #71717A; /* Dark slate gray */
+}
+
+.text-projection-future {
+  color: #4F46E5; /* Indigo shade */
 }
 
 .bg-deep-space {
-  background-color: #0B0E1F;
+  background-color: #121212;
 }
 
 .bg-midnight-navy {
-  background-color: #101323;
+  background-color: #1E1E1E;
 }
 
 .bg-cosmic-slate {
-  background-color: #181C31;
+  background-color: #2A2A2A;
 }
 
 .bg-electric-blue {
-  background-color: #6C3483; /* Changed to dark-purple */
+  background-color: #4A4A4A; /* Changed to medium gray */
 }
 
 .bg-dark-purple {
-  background-color: #6C3483; /* Added new background color */
+  background-color: #333333; /* Changed to dark gray */
 }
 
 .bg-teal-pulse {
-  background-color: #05D8C6;
+  background-color: #757575; /* Changed to light gray */
 }
 
 .bg-amethyst {
-  background-color: #9D5CFF;
+  background-color: #A0A0A0; /* Changed to silver gray */
+}
+
+/* New projection background colors */
+.bg-projection-current {
+  background-color: #71717A; /* Dark slate gray */
+}
+
+.bg-projection-future {
+  background-color: #4F46E5; /* Indigo shade */
 }
 
 /* Responsive adjustments */

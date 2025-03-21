@@ -68,9 +68,10 @@ const CoachConversation = ({
         // Get business context for personalized first message
         const businessName = businessProfile?.name || "";
         const industry = businessProfile?.industry || "";
+        const innovationPersona = businessProfile?.innovationPersona;
         
         // Create a system prompt for the initial greeting
-        const initialSystemPrompt = `You are an AI innovation coach named ${selectedCoach.name}.
+        let initialSystemPrompt = `You are an AI innovation coach named ${selectedCoach.name}.
 Your personality: ${selectedCoach.description || "helpful and insightful"}.
 Your specialty: ${selectedCoach.title || "business innovation"}.
 
@@ -82,9 +83,43 @@ TASK: This is the very first message to the user. Your role is to:
 
 Business Context (if available):
 ${businessName ? `Company: ${businessName}` : ""}
-${industry ? `Industry: ${industry}` : ""}
+${industry ? `Industry: ${industry}` : ""}`;
 
-IMPORTANT: Keep your response conversational, concise (2-3 sentences), and focused on how you can help with innovation. Do not use generic greetings or ask "how can I help" without mentioning innovation specifically.`;
+        // Add innovation persona guidance if available
+        if (innovationPersona) {
+          initialSystemPrompt += `\n\nINNOVATION PERSONA: ${innovationPersona.type.toUpperCase()}
+The user fits the "${innovationPersona.type}" innovation persona (confidence: ${innovationPersona.confidence}).
+${innovationPersona.explanation}
+
+Based on this persona, please:`;
+
+          // Add specific guidance based on persona type
+          switch(innovationPersona.type) {
+            case 'clueless':
+              initialSystemPrompt += `
+- Use simple, welcoming language and avoid jargon
+- Briefly mention that you'll guide them through innovation concepts
+- Be especially encouraging and supportive in your tone
+- Ask about their specific business challenges in a way that doesn't assume innovation knowledge`;
+              break;
+            case 'motivated':
+              initialSystemPrompt += `
+- Match their enthusiasm with an energetic tone
+- Mention your ability to provide structured approaches to innovation
+- Emphasize that you're here to help them implement and execute ideas
+- Ask what specific innovation challenges they're eager to tackle`;
+              break;
+            case 'hesitant':
+              initialSystemPrompt += `
+- Use a reassuring, measured tone that acknowledges caution is valuable
+- Briefly mention that innovation can be approached incrementally with minimal risk
+- Emphasize that you'll focus on practical, proven approaches
+- Ask what specific concerns they have about innovation for their business`;
+              break;
+          }
+        }
+
+        initialSystemPrompt += `\n\nIMPORTANT: Keep your response conversational, concise (2-3 sentences), and focused on how you can help with innovation. Do not use generic greetings or ask "how can I help" without mentioning innovation specifically.`;
 
         console.log('Initial system prompt:', initialSystemPrompt);
 
@@ -313,6 +348,7 @@ Impact:
       const companySize = businessProfile?.size || "your company";
       const challenges = businessProfile?.challenges || [];
       const goals = businessProfile?.goals || [];
+      const innovationPersona = businessProfile?.innovationPersona;
       
       // Build business context for suggestion generation
       const businessContext = `Company: ${businessName}
@@ -341,6 +377,46 @@ ${challenges.map(c => `- ${c}`).join('\n')}`;
       if (goals.length > 0) {
         systemPrompt += `\n\nBUSINESS GOALS:
 ${goals.map(g => `- ${g}`).join('\n')}`;
+      }
+      
+      // Add innovation persona guidance if available
+      if (innovationPersona) {
+        systemPrompt += `\n\nINNOVATION PERSONA: ${innovationPersona.type.toUpperCase()}
+The user fits the "${innovationPersona.type}" innovation persona (confidence: ${innovationPersona.confidence}).
+${innovationPersona.explanation}
+
+PERSONA-SPECIFIC COMMUNICATION GUIDANCE:`;
+
+        // Add specific guidance based on persona type
+        switch(innovationPersona.type) {
+          case 'clueless':
+            systemPrompt += `
+- Use simple, clear language and avoid jargon
+- Explain innovation concepts from first principles
+- Provide specific examples and case studies that relate to their industry
+- Break down complex ideas into step-by-step processes
+- Be encouraging and supportive rather than assuming knowledge
+- Focus on building their foundation before suggesting advanced techniques`;
+            break;
+          case 'motivated':
+            systemPrompt += `
+- Acknowledge their enthusiasm and channel it productively
+- Provide frameworks and structured approaches to innovation
+- Give actionable, practical next steps rather than theory
+- Suggest ways to overcome resource constraints
+- Highlight quick wins alongside longer-term strategies
+- Recommend tools and methodologies they can implement immediately`;
+            break;
+          case 'hesitant':
+            systemPrompt += `
+- Acknowledge concerns about risk and validate their caution
+- Emphasize risk mitigation strategies and safety mechanisms
+- Provide evidence of ROI and tangible benefits
+- Share success stories similar to their business context
+- Suggest smaller, incremental innovation approaches 
+- Focus on building confidence through small, predictable wins`;
+            break;
+        }
       }
       
       systemPrompt += `\n\nIMPORTANT INSTRUCTIONS:
@@ -783,7 +859,7 @@ const BusinessSimulation = () => {
   
   const getMetricTrendColor = (current: number, projected: number) => {
     const difference = projected - current;
-    if (difference > 5) return "text-teal-pulse";
+    if (difference > 5) return "text-projection-future";
     if (difference < -5) return "text-coral-energy";
     return "text-ghost-gray";
   };
@@ -805,12 +881,12 @@ const BusinessSimulation = () => {
           {/* Current metrics */}
           <div className="mb-6">
             <h3 className="text-lg font-medium text-pure-white mb-3 flex items-center">
-              <span className="w-2 h-2 bg-dark-purple rounded-full mr-2"></span>
+              <span className="w-2 h-2 bg-projection-current rounded-full mr-2"></span>
               Current Metrics
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               {Object.entries(simulation.currentMetrics).map(([key, value]) => (
-                <div key={key} className="bg-cosmic-slate bg-opacity-60 p-3 rounded-lg border border-cosmic-slate hover:border-electric-blue transition-colors">
+                <div key={key} className="bg-cosmic-slate bg-opacity-60 p-3 rounded-lg border border-cosmic-slate hover:border-projection-future transition-colors">
                   <div className="text-ghost-gray text-sm">
                     {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
                   </div>
@@ -830,18 +906,18 @@ const BusinessSimulation = () => {
           {/* Timeline projection */}
           <div className="mb-6">
             <h3 className="text-lg font-medium text-pure-white mb-3 flex items-center">
-              <span className="w-2 h-2 bg-teal-pulse rounded-full mr-2"></span>
+              <span className="w-2 h-2 bg-projection-future rounded-full mr-2"></span>
               Projections
             </h3>
             <div className="bg-cosmic-slate bg-opacity-40 p-4 rounded-lg border border-cosmic-slate">
               <div className="flex justify-between mb-6">
                 <div className="text-center">
                   <div className="text-ghost-gray text-sm">Current</div>
-                  <div className="w-3 h-3 bg-dark-purple rounded-full mx-auto mt-1 border border-white border-opacity-20"></div>
+                  <div className="w-3 h-3 bg-projection-current rounded-full mx-auto mt-1 border border-white border-opacity-20"></div>
                 </div>
                 <div className="text-center">
                   <div className="text-ghost-gray text-sm">1 Year</div>
-                  <div className="w-3 h-3 bg-teal-pulse rounded-full mx-auto mt-1 border border-white border-opacity-20"></div>
+                  <div className="w-3 h-3 bg-projection-future rounded-full mx-auto mt-1 border border-white border-opacity-20"></div>
                 </div>
                 <div className="text-center">
                   <div className="text-ghost-gray text-sm">2 Years</div>
@@ -862,20 +938,20 @@ const BusinessSimulation = () => {
                         {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
                       </span>
                       <div className="flex space-x-4">
-                        <span className="text-dark-purple">{formatMetricValue(currentValue, key)}</span>
-                        <span className="text-teal-pulse">{formatMetricValue(oneYearValue, key)}</span>
+                        <span className="text-projection-current">{formatMetricValue(currentValue, key)}</span>
+                        <span className="text-projection-future">{formatMetricValue(oneYearValue, key)}</span>
                         <span className="text-amethyst">{formatMetricValue(twoYearValue, key)}</span>
                       </div>
                     </div>
                     <div className="h-2 bg-cosmic-slate bg-opacity-60 rounded-full overflow-hidden relative">
                       {/* Current value */}
                       <div 
-                        className="absolute h-full bg-dark-purple" 
+                        className="absolute h-full bg-projection-current" 
                         style={{ width: `${(currentValue / max) * 100}%` }}
                       ></div>
                       {/* One year projection */}
                       <div 
-                        className="absolute h-full bg-teal-pulse" 
+                        className="absolute h-full bg-projection-future" 
                         style={{ width: `${(oneYearValue / max) * 100}%`, opacity: 0.7 }}
                       ></div>
                       {/* Two year projection */}
